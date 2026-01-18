@@ -44,10 +44,12 @@ export default function TournamentListPage() {
 
   return (
     <MainLayout>
-      <h1 className="text-3xl font-bold mb-6">Aktywne turnieje</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+        Aktywne turnieje
+      </h1>
 
       {items.length === 0 ? (
-        <p>Brak turniejów.</p>
+        <p className="text-sm sm:text-base">Brak turniejów.</p>
       ) : (
         <Table>
           <TableHeader>

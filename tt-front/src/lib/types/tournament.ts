@@ -22,8 +22,11 @@ export type TournamentListItemDTO = {
   numberOfRounds: number;
   roundDurationMinutes: number;
   gameSystemId: number;
+  gameSystemName?: string;
   organizerId: number;
+  organizerName?: string;
   location?: string;
+  description?: string;
   type?: string;
   currentParticipants?: number;
   maxParticipants?: number;

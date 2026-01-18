@@ -210,213 +210,260 @@ export default function TournamentDetailsPage() {
 
   return (
     <MainLayout>
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <CardTitle>{data.name}</CardTitle>
-            {isOwner ? (
-              <div className="flex gap-2">
-                <Button
-                  variant={data.status === "ACTIVE" ? "outline" : "default"}
-                  size="sm"
-                  onClick={handleToggleActive}
-                  disabled={toggling}
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+        {/* Główna zawartość */}
+        <div className="flex-1 min-w-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>{data.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p>
+                <strong>Status:</strong>{" "}
+                <span
+                  className={`px-2 py-1 rounded text-xs font-medium ${
+                    data.status === "ACTIVE"
+                      ? "bg-green-100 text-green-800"
+                      : data.status === "DRAFT"
+                      ? "bg-blue-100 text-blue-800"
+                      : data.status === "FINISHED"
+                      ? "bg-gray-100 text-gray-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
                 >
-                  {toggling
-                    ? "..."
-                    : data.status === "ACTIVE"
-                    ? "Dezaktywuj"
-                    : "Aktywuj"}
-                </Button>
-                <Link href={`/tournaments/${data.id}/edit`}>
-                  <Button variant="outline" size="sm">
-                    Edytuj
-                  </Button>
-                </Link>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? "Usuwam..." : "Usuń"}
-                </Button>
-              </div>
-            ) : (
-              auth.isAuthenticated &&
-              !isParticipant && (
-                <Button
-                  onClick={handleRegister}
-                  disabled={registering || data.status !== "ACTIVE"}
-                  size="sm"
-                >
-                  {registering ? "Rejestracja..." : "Zapisz się"}
-                </Button>
-              )
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p>
-            <strong>Status:</strong>{" "}
-            <span
-              className={`px-2 py-1 rounded text-xs font-medium ${
-                data.status === "ACTIVE"
-                  ? "bg-green-100 text-green-800"
-                  : data.status === "DRAFT"
-                  ? "bg-blue-100 text-blue-800"
-                  : data.status === "FINISHED"
-                  ? "bg-gray-100 text-gray-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {data.status === "ACTIVE"
-                ? "Aktywny"
-                : data.status === "DRAFT"
-                ? "Szkic"
-                : data.status === "FINISHED"
-                ? "Zakończony"
-                : "Anulowany"}
-            </span>
-          </p>
-          <p>
-            <strong>Start:</strong> {data.startDate}
-          </p>
-          <p>
-            <strong>Liczba rund:</strong> {data.numberOfRounds}
-          </p>
-          <p>
-            <strong>Czas rundy:</strong> {data.roundDurationMinutes} min
-          </p>
-          <p>
-            <strong>System gry (ID):</strong> {data.gameSystemId}
-          </p>
-          <p>
-            <strong>Organizator (ID):</strong> {data.organizerId}
-          </p>
-          <p>
-            <strong>Uczestnicy:</strong> {data.participantIds.length}
-            {isParticipant && (
-              <span className="ml-2 text-sm text-green-600">
-                (Jesteś zapisany)
-              </span>
-            )}
-          </p>
-        </CardContent>
-      </Card>
+                  {data.status === "ACTIVE"
+                    ? "Aktywny"
+                    : data.status === "DRAFT"
+                    ? "Szkic"
+                    : data.status === "FINISHED"
+                    ? "Zakończony"
+                    : "Anulowany"}
+                </span>
+              </p>
+              <p>
+                <strong>Start:</strong> {data.startDate}
+              </p>
+              {data.location && (
+                <p>
+                  <strong>Lokalizacja:</strong> {data.location}
+                </p>
+              )}
+              <p>
+                <strong>Liczba rund:</strong> {data.numberOfRounds}
+              </p>
+              <p>
+                <strong>Czas rundy:</strong> {data.roundDurationMinutes} min
+              </p>
+              <p>
+                <strong>System gry:</strong>{" "}
+                {data.gameSystemName || `ID: ${data.gameSystemId}`}
+              </p>
+              <p>
+                <strong>Organizator:</strong>{" "}
+                {data.organizerName || `ID: ${data.organizerId}`}
+              </p>
+              {data.maxParticipants && (
+                <p>
+                  <strong>Maksymalna liczba uczestników:</strong>{" "}
+                  {data.maxParticipants}
+                </p>
+              )}
+              <p>
+                <strong>Uczestnicy:</strong> {data.participantIds.length}
+                {isParticipant && (
+                  <span className="ml-2 text-sm text-green-600">
+                    (Jesteś zapisany)
+                  </span>
+                )}
+              </p>
+              {data.description && (
+                <p>
+                  <strong>Opis:</strong> {data.description}
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Confirmed Participants */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>
-            Potwierdzone uczestnictwa ({confirmedParticipants.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingParticipants ? (
-            <p className="text-muted-foreground">Ładowanie...</p>
-          ) : confirmedParticipants.length === 0 ? (
-            <p className="text-muted-foreground">
-              Brak potwierdzonych uczestników
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Imię i nazwisko</TableHead>
-                  <TableHead>Email</TableHead>
-                  {isOwner && (
-                    <TableHead className="text-right">Akcje</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {confirmedParticipants.map((participant) => (
-                  <TableRow key={participant.userId}>
-                    <TableCell>{participant.name}</TableCell>
-                    <TableCell>{participant.email}</TableCell>
-                    {isOwner && (
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleConfirmParticipant(participant.userId, false)
-                          }
-                        >
-                          Cofnij potwierdzenie
+          {/* Confirmed Participants */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>
+                Potwierdzone uczestnictwa ({confirmedParticipants.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingParticipants ? (
+                <p className="text-muted-foreground">Ładowanie...</p>
+              ) : confirmedParticipants.length === 0 ? (
+                <p className="text-muted-foreground">
+                  Brak potwierdzonych uczestników
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Imię i nazwisko</TableHead>
+                      <TableHead>Email</TableHead>
+                      {isOwner && (
+                        <TableHead className="text-right">Akcje</TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {confirmedParticipants.map((participant) => (
+                      <TableRow key={participant.userId}>
+                        <TableCell>{participant.name}</TableCell>
+                        <TableCell>{participant.email}</TableCell>
+                        {isOwner && (
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleConfirmParticipant(
+                                  participant.userId,
+                                  false
+                                )
+                              }
+                            >
+                              Cofnij potwierdzenie
+                            </Button>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Pending Participants */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>
+                Oczekujące na potwierdzenie ({pendingParticipants.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingParticipants ? (
+                <p className="text-muted-foreground">Ładowanie...</p>
+              ) : pendingParticipants.length === 0 ? (
+                <p className="text-muted-foreground">
+                  Brak oczekujących uczestników
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Imię i nazwisko</TableHead>
+                      <TableHead>Email</TableHead>
+                      {isOwner && (
+                        <TableHead className="text-right">Akcje</TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingParticipants.map((participant) => (
+                      <TableRow key={participant.userId}>
+                        <TableCell>{participant.name}</TableCell>
+                        <TableCell>{participant.email}</TableCell>
+                        {isOwner && (
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() =>
+                                  handleConfirmParticipant(
+                                    participant.userId,
+                                    true
+                                  )
+                                }
+                              >
+                                Potwierdź
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() =>
+                                  handleRemoveParticipant(participant.userId)
+                                }
+                              >
+                                Usuń
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Boczny panel z przyciskami */}
+        {(isOwner || (auth.isAuthenticated && !isParticipant)) && (
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="lg:sticky lg:top-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Akcje</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2">
+                  {isOwner ? (
+                    <>
+                      <Button
+                        variant={
+                          data.status === "ACTIVE" ? "outline" : "default"
+                        }
+                        onClick={handleToggleActive}
+                        disabled={toggling}
+                        className="w-full"
+                      >
+                        {toggling
+                          ? "..."
+                          : data.status === "ACTIVE"
+                          ? "Dezaktywuj"
+                          : "Aktywuj"}
+                      </Button>
+                      <Link
+                        href={`/tournaments/${data.id}/edit`}
+                        className="w-full"
+                      >
+                        <Button variant="outline" className="w-full">
+                          Edytuj turniej
                         </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pending Participants */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>
-            Oczekujące na potwierdzenie ({pendingParticipants.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingParticipants ? (
-            <p className="text-muted-foreground">Ładowanie...</p>
-          ) : pendingParticipants.length === 0 ? (
-            <p className="text-muted-foreground">
-              Brak oczekujących uczestników
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Imię i nazwisko</TableHead>
-                  <TableHead>Email</TableHead>
-                  {isOwner && (
-                    <TableHead className="text-right">Akcje</TableHead>
+                      </Link>
+                      <Button
+                        variant="destructive"
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="w-full"
+                      >
+                        {deleting ? "Usuwam..." : "Usuń turniej"}
+                      </Button>
+                    </>
+                  ) : (
+                    auth.isAuthenticated &&
+                    !isParticipant && (
+                      <Button
+                        onClick={handleRegister}
+                        disabled={registering || data.status !== "ACTIVE"}
+                        className="w-full"
+                      >
+                        {registering ? "Rejestracja..." : "Zapisz się"}
+                      </Button>
+                    )
                   )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingParticipants.map((participant) => (
-                  <TableRow key={participant.userId}>
-                    <TableCell>{participant.name}</TableCell>
-                    <TableCell>{participant.email}</TableCell>
-                    {isOwner && (
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() =>
-                              handleConfirmParticipant(participant.userId, true)
-                            }
-                          >
-                            Potwierdź
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              handleRemoveParticipant(participant.userId)
-                            }
-                          >
-                            Usuń
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+      </div>
     </MainLayout>
   );
 }

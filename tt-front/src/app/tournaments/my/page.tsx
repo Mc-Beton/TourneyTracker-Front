@@ -30,8 +30,15 @@ export default function MyTournamentsPage() {
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<number | null>(null);
   const [toggling, setToggling] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     if (!auth.isAuthenticated) {
       router.push("/login");
       return;
@@ -51,7 +58,7 @@ export default function MyTournamentsPage() {
     }
 
     loadMyTournaments();
-  }, [auth.isAuthenticated, auth.token, router]);
+  }, [mounted, auth.isAuthenticated, auth.token, router]);
 
   async function handleDelete(id: number, name: string) {
     if (!confirm(`Czy na pewno chcesz usunąć turniej "${name}"?`)) {
@@ -90,8 +97,12 @@ export default function MyTournamentsPage() {
     }
   }
 
-  if (!auth.isAuthenticated) {
-    return null;
+  if (!mounted || !auth.isAuthenticated) {
+    return (
+      <MainLayout>
+        <div>Ładowanie...</div>
+      </MainLayout>
+    );
   }
 
   return (
