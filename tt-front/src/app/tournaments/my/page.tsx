@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Calendar, MapPin, Dumbbell, Users } from "lucide-react";
 import MainLayout from "@/components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,14 +14,6 @@ import {
   setTournamentActive,
 } from "@/lib/api/tournaments";
 import type { TournamentListItemDTO } from "@/lib/types/tournament";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export default function MyTournamentsPage() {
   const auth = useAuth();
@@ -48,6 +41,7 @@ export default function MyTournamentsPage() {
       try {
         setLoading(true);
         const data = await getMyTournaments(auth.token!);
+        console.log("My tournaments data:", data);
         setTournaments(data);
       } catch (e) {
         console.error("Error loading my tournaments:", e);
@@ -143,105 +137,77 @@ export default function MyTournamentsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Lista Turniejów ({tournaments.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nazwa</TableHead>
-                    <TableHead>Data rozpoczęcia</TableHead>
-                    <TableHead>Lokalizacja</TableHead>
-                    <TableHead>Typ</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Uczestnicy</TableHead>
-                    <TableHead className="text-right">Akcje</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tournaments.map((tournament) => (
-                    <TableRow key={tournament.id}>
-                      <TableCell className="font-medium">
+          <div className="space-y-4">
+            {tournaments.map((tournament) => (
+              <div
+                key={tournament.id}
+                className="bg-card border rounded-lg p-4 shadow-sm"
+              >
+                <Link href={`/tournaments/${tournament.id}`}>
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="font-semibold text-lg text-primary hover:underline">
                         {tournament.name}
-                      </TableCell>
-                      <TableCell>{tournament.startDate}</TableCell>
-                      <TableCell>{tournament.location || "-"}</TableCell>
-                      <TableCell>{tournament.type}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            tournament.status === "ACTIVE"
-                              ? "bg-green-100 text-green-800"
-                              : tournament.status === "DRAFT"
-                              ? "bg-blue-100 text-blue-800"
-                              : tournament.status === "FINISHED"
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {tournament.status === "ACTIVE"
-                            ? "Aktywny"
+                      </h2>
+                    </div>
+
+                    <div className="flex-shrink-0">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          tournament.status === "ACTIVE"
+                            ? "bg-green-100 text-green-800"
                             : tournament.status === "DRAFT"
-                            ? "Szkic"
+                            ? "bg-blue-100 text-blue-800"
                             : tournament.status === "FINISHED"
-                            ? "Zakończony"
-                            : "Anulowany"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {tournament.currentParticipants || 0}
-                        {tournament.maxParticipants
-                          ? ` / ${tournament.maxParticipants}`
-                          : ""}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant={
-                              tournament.status === "ACTIVE"
-                                ? "outline"
-                                : "default"
-                            }
-                            size="sm"
-                            onClick={() => handleToggleActive(tournament)}
-                            disabled={toggling === tournament.id}
-                          >
-                            {toggling === tournament.id
-                              ? "..."
-                              : tournament.status === "ACTIVE"
-                              ? "Dezaktywuj"
-                              : "Aktywuj"}
-                          </Button>
-                          <Link href={`/tournaments/${tournament.id}/edit`}>
-                            <Button variant="outline" size="sm">
-                              Edytuj
-                            </Button>
-                          </Link>
-                          <Link href={`/tournaments/${tournament.id}`}>
-                            <Button variant="outline" size="sm">
-                              Zobacz
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              handleDelete(tournament.id, tournament.name)
-                            }
-                            disabled={deleting === tournament.id}
-                          >
-                            {deleting === tournament.id ? "Usuwam..." : "Usuń"}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                            ? "bg-gray-100 text-gray-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {tournament.status === "ACTIVE"
+                          ? "Aktywny"
+                          : tournament.status === "DRAFT"
+                          ? "Szkic"
+                          : tournament.status === "FINISHED"
+                          ? "Zakończony"
+                          : "Anulowany"}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm mb-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-4 h-4 flex-shrink-0" />
+                    <span>{tournament.startDate}</span>
+                  </div>
+
+                  {tournament.location && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{tournament.location}</span>
+                    </div>
+                  )}
+
+                  {tournament.armyPointsLimit && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Dumbbell className="w-4 h-4 flex-shrink-0" />
+                      <span>{tournament.armyPointsLimit} pkt</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                      {tournament.confirmedParticipantsCount || 0}
+                      {tournament.maxParticipants
+                        ? ` / ${tournament.maxParticipants}`
+                        : ""}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </MainLayout>

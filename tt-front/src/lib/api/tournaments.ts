@@ -27,7 +27,7 @@ export function getTournamentEditForm(id: number, token: string) {
 
 export function createTournament(
   payload: CreateTournamentDTO,
-  token: string
+  token: string,
 ): Promise<TournamentDetails> {
   return http<TournamentDetails>("/api/tournaments", {
     method: "POST",
@@ -49,7 +49,7 @@ export function getMyTournaments(token: string) {
 export function updateTournament(
   id: number,
   payload: CreateTournamentDTO,
-  token: string
+  token: string,
 ): Promise<TournamentDetails> {
   return http<TournamentDetails>(`/api/tournaments/${id}`, {
     method: "PUT",
@@ -72,7 +72,7 @@ export function deleteTournament(id: number, token: string): Promise<void> {
 export function setTournamentActive(
   id: number,
   active: boolean,
-  token: string
+  token: string,
 ): Promise<TournamentDetails> {
   return http<TournamentDetails>(
     `/api/tournaments/${id}/active?active=${active}`,
@@ -81,14 +81,26 @@ export function setTournamentActive(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
+}
+
+export function startTournament(
+  id: number,
+  token: string,
+): Promise<TournamentDetails> {
+  return http<TournamentDetails>(`/api/tournaments/${id}/start`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }
 
 export function addParticipant(
   tournamentId: number,
   userId: number,
-  token: string
+  token: string,
 ): Promise<TournamentDetails> {
   return http<TournamentDetails>(
     `/api/tournaments/${tournamentId}/participants/${userId}`,
@@ -97,30 +109,30 @@ export function addParticipant(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 }
 
 export function getPendingParticipants(
-  tournamentId: number
+  tournamentId: number,
 ): Promise<TournamentParticipantDTO[]> {
   return http<TournamentParticipantDTO[]>(
-    `/api/tournaments/${tournamentId}/users/pending`
+    `/api/tournaments/${tournamentId}/users/pending`,
   );
 }
 
 export function getConfirmedParticipants(
-  tournamentId: number
+  tournamentId: number,
 ): Promise<TournamentParticipantDTO[]> {
   return http<TournamentParticipantDTO[]>(
-    `/api/tournaments/${tournamentId}/users/confirmed`
+    `/api/tournaments/${tournamentId}/users/confirmed`,
   );
 }
 
 export function removeParticipant(
   tournamentId: number,
   userId: number,
-  token: string
+  token: string,
 ): Promise<TournamentDetails> {
   return http<TournamentDetails>(
     `/api/tournaments/${tournamentId}/participants/${userId}`,
@@ -129,7 +141,7 @@ export function removeParticipant(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 }
 
@@ -137,7 +149,7 @@ export function setParticipantConfirmation(
   tournamentId: number,
   userId: number,
   confirmed: boolean,
-  token: string
+  token: string,
 ): Promise<TournamentDetails> {
   return http<TournamentDetails>(
     `/api/tournaments/${tournamentId}/participants/${userId}/confirm?confirmed=${confirmed}`,
@@ -146,6 +158,6 @@ export function setParticipantConfirmation(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 }

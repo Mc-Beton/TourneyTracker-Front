@@ -42,6 +42,8 @@ export type MatchScoringDTO = {
   totalRounds: number;
   status: string;
   endTime: string | null;
+  gameDurationMinutes: number | null; // czas trwania rundy turniejowej
+  resultSubmissionDeadline: string | null; // deadline do wysyłania wyników
   primaryScoreEnabled: boolean;
   secondaryScoreEnabled: boolean;
   thirdScoreEnabled: boolean;

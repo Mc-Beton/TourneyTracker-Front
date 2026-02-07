@@ -2,19 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "./ui/button";
+import { NotificationBell } from "./NotificationBell";
 
 export default function MainLayout({
   children,
+  backAction,
 }: {
   children: React.ReactNode;
+  backAction?: () => void;
 }) {
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -24,20 +29,33 @@ export default function MainLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b px-3 sm:px-6 py-3 sm:py-4">
+      <header className="bg-primary text-primary-foreground shadow-md px-3 sm:px-6 py-3 relative">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-            <Link
-              href="/"
-              className="font-bold text-base sm:text-lg hover:opacity-80 whitespace-nowrap"
+            {/* Mobile Menu Button - Left Side */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden flex items-center justify-center w-10 h-10 border border-white rounded-lg hover:bg-white/20 text-primary-foreground flex-shrink-0"
+              aria-label="Menu"
             >
-              Turnieje
+              <span className="text-xl">☰</span>
+            </button>
+
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80">
+              <Image
+                src="/logo.png"
+                alt="WarBracket Logo"
+                width={128}
+                height={128}
+                className="h-24 sm:h-32 w-auto"
+                priority
+              />
             </Link>
 
-            <nav className="hidden sm:flex gap-3">
+            <nav className="hidden md:flex gap-3">
               <Link
                 href="/tournaments"
-                className="hover:underline whitespace-nowrap"
+                className="hover:underline whitespace-nowrap text-primary-foreground"
               >
                 Lista
               </Link>
@@ -45,19 +63,19 @@ export default function MainLayout({
                 <>
                   <Link
                     href="/tournaments/my"
-                    className="hover:underline whitespace-nowrap"
+                    className="hover:underline whitespace-nowrap text-primary-foreground"
                   >
                     Moje turnieje
                   </Link>
                   <Link
                     href="/tournaments/new"
-                    className="hover:underline whitespace-nowrap"
+                    className="hover:underline whitespace-nowrap text-primary-foreground"
                   >
                     Utwórz turniej
                   </Link>
                   <Link
                     href="/single-matches/my"
-                    className="hover:underline whitespace-nowrap"
+                    className="hover:underline whitespace-nowrap text-primary-foreground"
                   >
                     Własne gry
                   </Link>
@@ -66,51 +84,127 @@ export default function MainLayout({
             </nav>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {mounted ? (
               <>
+                {auth.isAuthenticated && <NotificationBell />}
+
+                {/* Mobile User Icon */}
                 <button
                   onClick={() => {
                     if (auth.isAuthenticated) router.push("/profile");
                     else router.push("/login");
                   }}
-                  className="flex items-center gap-1 sm:gap-2 border rounded-full px-2 sm:px-3 py-1.5 sm:py-2 hover:bg-accent"
+                  className="md:hidden flex items-center justify-center w-10 h-10 border border-white rounded-full hover:bg-white/20 text-primary-foreground"
                   title={auth.isAuthenticated ? "Profil" : "Zaloguj się"}
+                  aria-label="Profil użytkownika"
                 >
-                  <span className="text-base sm:text-lg">👤</span>
-                  {auth.isAuthenticated && auth.username && (
-                    <span className="text-xs sm:text-sm hidden md:inline">
-                      {auth.username}
-                    </span>
-                  )}
+                  <span className="text-lg">👤</span>
                 </button>
 
-                {auth.isAuthenticated ? (
+                {/* Desktop Menu */}
+                <div className="hidden md:flex items-center gap-2">
                   <button
                     onClick={() => {
-                      if (confirm("Czy na pewno chcesz się wylogować?")) {
-                        auth.logout();
-                        router.push("/");
-                      }
+                      if (auth.isAuthenticated) router.push("/profile");
+                      else router.push("/login");
                     }}
-                    className="border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 hover:bg-accent text-xs sm:text-sm"
+                    className="flex items-center gap-2 border border-white rounded-full px-3 py-2 hover:bg-white/20 text-primary-foreground min-h-[44px]"
+                    title={auth.isAuthenticated ? "Profil" : "Zaloguj się"}
                   >
-                    Wyloguj
+                    <span className="text-lg">👤</span>
+                    {auth.isAuthenticated && auth.username && (
+                      <span className="text-sm">{auth.username}</span>
+                    )}
                   </button>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 hover:bg-accent text-xs sm:text-sm"
-                  >
-                    Zaloguj
-                  </Link>
-                )}
+
+                  {auth.isAuthenticated ? (
+                    <button
+                      onClick={() => {
+                        if (confirm("Czy na pewno chcesz się wylogować?")) {
+                          auth.logout();
+                          router.push("/");
+                        }
+                      }}
+                      className="border border-white rounded-lg px-3 py-2 hover:bg-white/20 text-sm text-primary-foreground min-h-[44px]"
+                    >
+                      Wyloguj
+                    </button>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="border border-white rounded-lg px-3 py-2 hover:bg-white/20 text-sm text-primary-foreground min-h-[44px] flex items-center"
+                    >
+                      Zaloguj
+                    </Link>
+                  )}
+                </div>
               </>
             ) : (
               <div className="h-10 w-32 bg-muted animate-pulse rounded" />
             )}
           </div>
         </div>
+
+        {/* Mobile Menu Backdrop */}
+        {mobileMenuOpen && mounted && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && mounted && (
+          <div className="md:hidden absolute left-0 right-0 top-full bg-[#00BCD4] shadow-lg z-50 border-t border-white/20">
+            <div className="px-3 py-3 space-y-2">
+              <Link
+                href="/tournaments"
+                className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Lista turniejów
+              </Link>
+              {auth.isAuthenticated ? (
+                <>
+                  <Link
+                    href="/tournaments/my"
+                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Moje turnieje
+                  </Link>
+                  <Link
+                    href="/tournaments/new"
+                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Utwórz turniej
+                  </Link>
+                  <Link
+                    href="/single-matches/my"
+                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Własne gry
+                  </Link>
+                  <button
+                    onClick={() => {
+                      if (confirm("Czy na pewno chcesz się wylogować?")) {
+                        auth.logout();
+                        router.push("/");
+                        setMobileMenuOpen(false);
+                      }
+                    }}
+                    className="block w-full text-left py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                  >
+                    Wyloguj
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="flex-1 p-3 sm:p-6 max-w-7xl mx-auto w-full">
@@ -118,7 +212,7 @@ export default function MainLayout({
           <div className="mb-3 sm:mb-4">
             <Button
               variant="outline"
-              onClick={() => router.back()}
+              onClick={() => (backAction ? backAction() : router.back())}
               className="gap-2 text-sm"
               size="sm"
             >
@@ -129,8 +223,8 @@ export default function MainLayout({
         {children}
       </main>
 
-      <footer className="border-t px-3 sm:px-6 py-3 sm:py-4 text-xs opacity-80">
-        © {new Date().getFullYear()} Turnieje
+      <footer className="bg-primary text-primary-foreground px-3 sm:px-6 py-3 sm:py-4 text-xs opacity-90">
+        © {new Date().getFullYear()} WarBracket
       </footer>
     </div>
   );

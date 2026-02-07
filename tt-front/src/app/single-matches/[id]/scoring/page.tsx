@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import {
@@ -40,6 +40,10 @@ export default function MatchScoringPage() {
   // Timer
   const [elapsedTime, setElapsedTime] = useState(0);
 
+  // Polling refs
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isUserTypingRef = useRef(false);
+
   const matchId = params.id ? Number(params.id) : null;
 
   useEffect(() => {
@@ -69,6 +73,169 @@ export default function MatchScoringPage() {
 
     return () => clearInterval(interval);
   }, [matchData]);
+
+  // Funkcja obliczająca pozostały czas rundy
+  const getRemainingTime = () => {
+    if (!matchData?.gameDurationMinutes || !matchData.rounds) return null;
+
+    const currentRoundData = matchData.rounds.find(
+      (r) => r.roundNumber === matchData.currentRound,
+    );
+    if (!currentRoundData?.startTime) return null;
+
+    const start = new Date(currentRoundData.startTime).getTime();
+    const now = Date.now();
+    const roundDurationMs = matchData.gameDurationMinutes * 60 * 1000;
+    const elapsed = now - start;
+    const remaining = Math.max(0, roundDurationMs - elapsed);
+
+    return Math.floor(remaining / 1000); // w sekundach
+  };
+
+  const remainingTime = getRemainingTime();
+
+  // Wypełnienie pól formularza zapisanymi wartościami
+  useEffect(() => {
+    if (!matchData) return;
+
+    console.log(
+      "[Form Sync] Current round:",
+      matchData.currentRound,
+      "Editing round:",
+      editingRound,
+    );
+
+    if (editingRound !== null) {
+      console.log("[Form Sync] Skipping - editing round:", editingRound);
+      return;
+    }
+
+    const currentRoundData = matchData.rounds.find(
+      (r) => r.roundNumber === matchData.currentRound,
+    );
+
+    if (!currentRoundData) {
+      console.log(
+        "[Form Sync] No round data found for round:",
+        matchData.currentRound,
+      );
+      return;
+    }
+
+    // Nie aktualizuj pól gdy użytkownik aktualnie wpisuje
+    if (isUserTypingRef.current) {
+      console.log("[Form Sync] Skipping - user is typing");
+      return;
+    }
+
+    console.log(
+      "[Form Sync] Syncing fields for round:",
+      matchData.currentRound,
+      currentRoundData,
+    );
+
+    // Synchronizuj pola z wartościami z serwera
+    setP1Main(
+      currentRoundData.player1MainScore !== null
+        ? currentRoundData.player1MainScore.toString()
+        : "",
+    );
+    setP1Secondary(
+      currentRoundData.player1SecondaryScore !== null
+        ? currentRoundData.player1SecondaryScore.toString()
+        : "",
+    );
+    setP2Main(
+      currentRoundData.player2MainScore !== null
+        ? currentRoundData.player2MainScore.toString()
+        : "",
+    );
+    setP2Secondary(
+      currentRoundData.player2SecondaryScore !== null
+        ? currentRoundData.player2SecondaryScore.toString()
+        : "",
+    );
+  }, [matchData?.currentRound, editingRound, matchData?.rounds]);
+
+  // Auto-refresh (polling) - odświeża dane co 5s gdy mecz nie jest zakończony
+  useEffect(() => {
+    if (!auth.token || !matchId) return;
+
+    console.log("[Polling] Starting polling for match", matchId);
+
+    // Funkcja odświeżająca dane
+    const refreshData = async () => {
+      // Nie odświeżaj gdy karta nie jest widoczna
+      if (document.hidden) return;
+
+      try {
+        console.log("[Polling] Fetching match data...");
+        const data = await getMatchScoring(matchId, auth.token);
+        console.log("[Polling] Data received:", {
+          currentRound: data.currentRound,
+          endTime: data.endTime,
+          endTimeType: typeof data.endTime,
+          roundData: data.rounds[data.currentRound - 1],
+        });
+
+        // Jeśli mecz się zakończył, zatrzymaj polling
+        if (data.endTime !== null && data.endTime !== undefined) {
+          console.log(
+            "[Polling] Match ended, stopping polling. endTime:",
+            data.endTime,
+          );
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+
+          // Przekieruj do strony szczegółów meczu
+          setTimeout(() => {
+            router.push(`/single-matches/${matchId}`);
+          }, 1000);
+        }
+
+        setMatchData(data);
+      } catch (e) {
+        // Ciche niepowodzenie - nie przerywaj pollingu
+        console.error("Polling error:", e);
+      }
+    };
+
+    // Uruchom polling co 5 sekund
+    const interval = setInterval(refreshData, 5000);
+    pollingIntervalRef.current = interval;
+    console.log("[Polling] Interval created:", interval);
+
+    // Page Visibility API - zatrzymaj/wznów polling gdy użytkownik zmienia kartę
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Karta niewidoczna - zatrzymaj polling
+        console.log("[Polling] Tab hidden, stopping polling");
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      } else {
+        // Karta widoczna - odśwież dane i wznów polling
+        console.log("[Polling] Tab visible, resuming polling");
+        refreshData();
+        const newInterval = setInterval(refreshData, 5000);
+        pollingIntervalRef.current = newInterval;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Cleanup po odmontowaniu komponentu
+    return () => {
+      console.log("[Polling] Cleanup - stopping polling");
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [auth.token, matchId]);
 
   async function loadMatchData() {
     if (!auth.token || !matchId) return;
@@ -104,33 +271,46 @@ export default function MatchScoringPage() {
 
     const scores: ScoreEntryDTO[] = [];
 
-    if (p1Main) {
-      scores.push({
-        side: "PLAYER1" as MatchSide,
-        scoreType: "MAIN_SCORE",
-        score: parseInt(p1Main),
-      });
+    // Wysyłaj tylko wypełnione pola (zabezpieczenie przed nadpisywaniem)
+    if (p1Main && p1Main.trim() !== "") {
+      const parsed = parseInt(p1Main);
+      if (!isNaN(parsed)) {
+        scores.push({
+          side: "PLAYER1" as MatchSide,
+          scoreType: "MAIN_SCORE",
+          score: parsed,
+        });
+      }
     }
-    if (p1Secondary) {
-      scores.push({
-        side: "PLAYER1" as MatchSide,
-        scoreType: "SECONDARY_SCORE",
-        score: parseInt(p1Secondary),
-      });
+    if (p1Secondary && p1Secondary.trim() !== "") {
+      const parsed = parseInt(p1Secondary);
+      if (!isNaN(parsed)) {
+        scores.push({
+          side: "PLAYER1" as MatchSide,
+          scoreType: "SECONDARY_SCORE",
+          score: parsed,
+        });
+      }
     }
-    if (p2Main) {
-      scores.push({
-        side: "PLAYER2" as MatchSide,
-        scoreType: "MAIN_SCORE",
-        score: parseInt(p2Main),
-      });
+    if (p2Main && p2Main.trim() !== "") {
+      const parsed = parseInt(p2Main);
+      if (!isNaN(parsed)) {
+        scores.push({
+          side: "PLAYER2" as MatchSide,
+          scoreType: "MAIN_SCORE",
+          score: parsed,
+        });
+      }
     }
-    if (p2Secondary) {
-      scores.push({
-        side: "PLAYER2" as MatchSide,
-        scoreType: "SECONDARY_SCORE",
-        score: parseInt(p2Secondary),
-      });
+    if (p2Secondary && p2Secondary.trim() !== "") {
+      const parsed = parseInt(p2Secondary);
+      if (!isNaN(parsed)) {
+        scores.push({
+          side: "PLAYER2" as MatchSide,
+          scoreType: "SECONDARY_SCORE",
+          score: parsed,
+        });
+      }
     }
 
     if (scores.length === 0) {
@@ -147,12 +327,7 @@ export default function MatchScoringPage() {
       );
       setMatchData(updated);
       setError(null);
-      // Clear form
-      setP1Main("");
-      setP1Secondary("");
-      setP2Main("");
-      setP2Secondary("");
-      setEditingRound(null);
+      // Pola formularza będą automatycznie wypełnione przez useEffect
     } catch (e) {
       setError(e instanceof Error ? e.message : "Błąd zapisywania wyników");
     } finally {
@@ -208,11 +383,7 @@ export default function MatchScoringPage() {
       const updated = await endRound(matchId, roundNumber, auth.token);
       setMatchData(updated);
 
-      // Wyczyść formularz
-      setP1Main("");
-      setP1Secondary("");
-      setP2Main("");
-      setP2Secondary("");
+      // Wyczyść stan edycji
       setEditingRound(null);
 
       // Automatycznie rozpocznij następną rundę jeśli istnieje
@@ -340,7 +511,7 @@ export default function MatchScoringPage() {
         {/* Header */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">
                   {matchData.matchName || `Mecz #${matchData.matchId}`}
@@ -352,6 +523,7 @@ export default function MatchScoringPage() {
               <Button
                 variant="outline"
                 onClick={() => router.push("/single-matches/my")}
+                className="min-h-[44px] w-full sm:w-auto"
               >
                 Powrót
               </Button>
@@ -390,8 +562,25 @@ export default function MatchScoringPage() {
               </CardTitle>
               {currentRoundData?.startTime &&
                 matchData.status !== "FINISHED" && (
-                  <div className="text-2xl font-bold tabular-nums">
-                    ⏱️ {formatTime(elapsedTime)}
+                  <div className="text-right">
+                    {remainingTime !== null && remainingTime > 0 ? (
+                      <div>
+                        <div className="text-2xl font-bold tabular-nums text-orange-600">
+                          ⏱️ {formatTime(remainingTime)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Pozostało do końca rundy
+                        </div>
+                      </div>
+                    ) : remainingTime === 0 ? (
+                      <div className="text-xl font-bold text-red-600">
+                        ⏰ Czas minął!
+                      </div>
+                    ) : (
+                      <div className="text-2xl font-bold tabular-nums">
+                        ⏱️ {formatTime(elapsedTime)}
+                      </div>
+                    )}
                   </div>
                 )}
             </div>
@@ -405,7 +594,7 @@ export default function MatchScoringPage() {
                 <Button
                   onClick={handleStartRound}
                   disabled={processing || matchData.status === "FINISHED"}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 min-h-[48px] px-8"
                 >
                   {processing ? "Ładowanie..." : "Rozpocznij rundę"}
                 </Button>
@@ -428,6 +617,8 @@ export default function MatchScoringPage() {
                           type="number"
                           value={p1Main}
                           onChange={(e) => setP1Main(e.target.value)}
+                          onFocus={() => (isUserTypingRef.current = true)}
+                          onBlur={() => (isUserTypingRef.current = false)}
                           placeholder="0"
                           min="0"
                           disabled={matchData.status === "FINISHED"}
@@ -443,6 +634,8 @@ export default function MatchScoringPage() {
                           type="number"
                           value={p1Secondary}
                           onChange={(e) => setP1Secondary(e.target.value)}
+                          onFocus={() => (isUserTypingRef.current = true)}
+                          onBlur={() => (isUserTypingRef.current = false)}
                           placeholder="0"
                           min="0"
                           disabled={matchData.status === "FINISHED"}
@@ -465,6 +658,8 @@ export default function MatchScoringPage() {
                           type="number"
                           value={p2Main}
                           onChange={(e) => setP2Main(e.target.value)}
+                          onFocus={() => (isUserTypingRef.current = true)}
+                          onBlur={() => (isUserTypingRef.current = false)}
                           placeholder="0"
                           min="0"
                           disabled={matchData.status === "FINISHED"}
@@ -480,6 +675,8 @@ export default function MatchScoringPage() {
                           type="number"
                           value={p2Secondary}
                           onChange={(e) => setP2Secondary(e.target.value)}
+                          onFocus={() => (isUserTypingRef.current = true)}
+                          onBlur={() => (isUserTypingRef.current = false)}
                           placeholder="0"
                           min="0"
                           disabled={matchData.status === "FINISHED"}
@@ -490,13 +687,13 @@ export default function MatchScoringPage() {
                 </div>
 
                 {/* Przyciski akcji */}
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button
                     onClick={() =>
                       handleSubmitScores(editingRound || matchData.currentRound)
                     }
                     disabled={processing || matchData.status === "FINISHED"}
-                    className="flex-1"
+                    className="flex-1 min-h-[48px]"
                   >
                     {processing
                       ? "Zapisywanie..."
@@ -514,11 +711,11 @@ export default function MatchScoringPage() {
                         }
                         disabled={processing}
                         variant="outline"
-                        className={
+                        className={`min-h-[48px] ${
                           matchData.currentRound === matchData.totalRounds
                             ? "bg-red-50 hover:bg-red-100 text-red-700 border-red-300"
                             : ""
-                        }
+                        }`}
                       >
                         {matchData.currentRound === matchData.totalRounds
                           ? "Zakończ rozgrywkę"
@@ -529,12 +726,10 @@ export default function MatchScoringPage() {
                     <Button
                       onClick={() => {
                         setEditingRound(null);
-                        setP1Main("");
-                        setP1Secondary("");
-                        setP2Main("");
-                        setP2Secondary("");
+                        // Pola będą automatycznie wypełnione przez useEffect
                       }}
                       variant="ghost"
+                      className="min-h-[48px]"
                     >
                       Anuluj
                     </Button>

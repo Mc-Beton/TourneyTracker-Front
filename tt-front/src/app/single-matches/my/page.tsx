@@ -8,14 +8,6 @@ import MainLayout from "@/components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export default function MySingleMatchesPage() {
   const auth = useAuth();
@@ -72,74 +64,67 @@ export default function MySingleMatchesPage() {
               Nie masz jeszcze żadnych gier
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nazwa</TableHead>
-                    <TableHead>System gry</TableHead>
-                    <TableHead>Gracz 1</TableHead>
-                    <TableHead>Gracz 2</TableHead>
-                    <TableHead>Tryb</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Akcje</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {matches.map((match) => {
-                    // Determine match status
-                    let statusLabel = "Oczekuje";
-                    let statusColor = "bg-gray-100 text-gray-800";
+            <div className="space-y-4">
+              {matches.map((match) => {
+                let statusLabel = "Oczekuje";
+                let statusColor = "bg-gray-100 text-gray-800";
 
-                    if (match.endTime) {
-                      statusLabel = "Zakończona";
-                      statusColor = "bg-red-100 text-red-800";
-                    } else if (match.player1ready && match.player2ready) {
-                      statusLabel = "W trakcie";
-                      statusColor = "bg-green-100 text-green-800";
-                    } else if (match.player1ready || match.player2ready) {
-                      statusLabel = "Gotowość";
-                      statusColor = "bg-yellow-100 text-yellow-800";
-                    }
+                if (match.endTime) {
+                  statusLabel = "Zakończona";
+                  statusColor = "bg-red-100 text-red-800";
+                } else if (match.player1ready && match.player2ready) {
+                  statusLabel = "W trakcie";
+                  statusColor = "bg-green-100 text-green-800";
+                } else if (match.player1ready || match.player2ready) {
+                  statusLabel = "Gotowość";
+                  statusColor = "bg-yellow-100 text-yellow-800";
+                }
 
-                    return (
-                      <TableRow key={match.matchId}>
-                        <TableCell className="font-medium">
+                return (
+                  <Link
+                    key={match.matchId}
+                    href={`/single-matches/${match.matchId}`}
+                    className="block bg-card border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Lewa strona: Nazwa + System */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg text-primary hover:underline mb-1">
                           {match.matchName || `Mecz #${match.matchId}`}
-                        </TableCell>
-                        <TableCell>{match.gameSystemName}</TableCell>
-                        <TableCell>{match.player1Name}</TableCell>
-                        <TableCell>{match.player2Name}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${
-                              match.mode === "LIVE"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {match.mode === "LIVE" ? "Live" : "Online"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${statusColor}`}
-                          >
-                            {statusLabel}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Link href={`/single-matches/${match.matchId}`}>
-                            <Button size="sm" variant="outline">
-                              Details
-                            </Button>
-                          </Link>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {match.gameSystemName}
+                        </p>
+
+                        {/* Po środku: Gracz vs Gracz */}
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <span>{match.player1Name}</span>
+                          <span className="text-muted-foreground">vs</span>
+                          <span>{match.player2Name}</span>
+                        </div>
+                      </div>
+
+                      {/* Prawa strona: Tryb + Status */}
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            match.mode === "LIVE"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {match.mode === "LIVE" ? "Live" : "Online"}
+                        </span>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${statusColor}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </CardContent>

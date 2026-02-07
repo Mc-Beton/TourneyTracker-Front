@@ -63,3 +63,31 @@ export function startMatch(
     },
   });
 }
+
+export interface CurrentMatchDTO {
+  matchId: number;
+  tableNumber: number | null;
+  opponentName: string;
+  status: string;
+  startTime: string | null;
+  endTime: string | null;
+  isReady: boolean;
+  opponentReady: boolean;
+  resultsSubmitted: boolean;
+  resultsConfirmed: boolean;
+  rounds: any[];
+}
+
+export function getCurrentMatch(
+  tournamentId: number,
+  token: string,
+): Promise<CurrentMatchDTO | null> {
+  return http<CurrentMatchDTO | null>(
+    `/api/player/tournaments/${tournamentId}/current-match`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}

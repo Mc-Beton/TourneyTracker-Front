@@ -55,7 +55,11 @@ export type RoundTableRowDTO = {
 export type MatchSummaryDTO = {
   matchId: number;
   matchName: string | null;
+  tournamentId: number | null; // ID turnieju jeśli mecz jest meczem turniejowym
   mode: MatchMode;
+  currentUserId: number; // ID aktualnie zalogowanego użytkownika
+  player1Id: number | null;
+  player2Id: number | null;
   player1Name: string;
   player2Name: string;
   primaryMission: string | null;

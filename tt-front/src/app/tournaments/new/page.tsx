@@ -1,12 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTournament } from "@/lib/api/tournaments";
+import { getGameSystems } from "@/lib/api/systems";
 import { useAuth } from "@/lib/auth/useAuth";
+import type { IdNameDTO } from "@/lib/types/systems";
 import type {
   CreateTournamentDTO,
   ScoringSystem,
+  TournamentPointsSystem,
+  RoundStartMode,
 } from "@/lib/types/tournament";
 import MainLayout from "@/components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +28,26 @@ const scoreTypeOptions = [
   { value: "SECONDARY_SCORE", label: "Secondary Score" },
   { value: "THIRD_SCORE", label: "Third Score" },
   { value: "ADDITIONAL_SCORE", label: "Additional Score" },
+];
+
+const tournamentPointsSystemOptions: {
+  value: TournamentPointsSystem;
+  label: string;
+}[] = [
+  { value: "FIXED", label: "Stała punktacja" },
+  { value: "POINT_DIFFERENCE_STRICT", label: "Różnica punktowa - standardowa" },
+  { value: "POINT_DIFFERENCE_LENIENT", label: "Różnica punktowa - łagodna" },
+];
+
+const roundStartModeOptions: {
+  value: RoundStartMode;
+  label: string;
+}[] = [
+  {
+    value: "ALL_MATCHES_TOGETHER",
+    label: "Wszystkie mecze startują jednocześnie",
+  },
+  { value: "INDIVIDUAL_MATCHES", label: "Każdy mecz startuje osobno" },
 ];
 
 function toLocalDateInputValue(d: Date) {
@@ -50,15 +74,39 @@ export default function CreateTournamentPage() {
     registrationDeadline: "",
     location: "",
     venue: "",
+    armyPointsLimit: undefined,
     scoringSystem: "ROUND_BY_ROUND",
     enabledScoreTypes: [],
     requireAllScoreTypes: false,
     minScore: 0,
     maxScore: 100,
+    // Domyślne wartości dla Tournament Points
+    tournamentPointsSystem: undefined,
+    pointsForWin: undefined,
+    pointsForDraw: undefined,
+    pointsForLoss: undefined,
+    scoreSubmissionExtraMinutes: 15,
+    roundStartMode: "ALL_MATCHES_TOGETHER",
   });
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gameSystems, setGameSystems] = useState<IdNameDTO[]>([]);
+  const [loadingSystems, setLoadingSystems] = useState(true);
+
+  useEffect(() => {
+    if (auth.token) {
+      getGameSystems(auth.token)
+        .then((systems) => {
+          setGameSystems(systems);
+          if (systems.length > 0 && !form.gameSystemId) {
+            update("gameSystemId", systems[0].id);
+          }
+        })
+        .catch((e) => console.error("Failed to load game systems:", e))
+        .finally(() => setLoadingSystems(false));
+    }
+  }, [auth.token]);
 
   const canSubmit = useMemo(() => {
     if (!form.name.trim()) return false;
@@ -71,7 +119,7 @@ export default function CreateTournamentPage() {
 
   function update<K extends keyof CreateTournamentDTO>(
     key: K,
-    value: CreateTournamentDTO[K]
+    value: CreateTournamentDTO[K],
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -81,7 +129,7 @@ export default function CreateTournamentPage() {
     if (current.includes(value)) {
       update(
         "enabledScoreTypes",
-        current.filter((x) => x !== value)
+        current.filter((x) => x !== value),
       );
     } else {
       update("enabledScoreTypes", [...current, value]);
@@ -113,6 +161,7 @@ export default function CreateTournamentPage() {
       registrationDeadline: form.registrationDeadline?.trim() || undefined,
       location: form.location?.trim() || undefined,
       venue: form.venue?.trim() || undefined,
+      armyPointsLimit: form.armyPointsLimit,
       enabledScoreTypes:
         (form.enabledScoreTypes?.length ?? 0) > 0
           ? form.enabledScoreTypes
@@ -218,15 +267,70 @@ export default function CreateTournamentPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Czas dodatkowy na wpisanie punktów (min)
+                </label>
+                <Input
+                  type="number"
+                  min={5}
+                  value={form.scoreSubmissionExtraMinutes ?? 15}
+                  onChange={(e) =>
+                    update(
+                      "scoreSubmissionExtraMinutes",
+                      Number(e.target.value),
+                    )
+                  }
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Domyślnie 15 minut po zakończeniu meczu
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Tryb startowania meczów
+                </label>
+                <select
+                  value={form.roundStartMode ?? "ALL_MATCHES_TOGETHER"}
+                  onChange={(e) =>
+                    update("roundStartMode", e.target.value as RoundStartMode)
+                  }
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {roundStartModeOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">
-                Game system ID*
+                System gry*
               </label>
-              <Input
-                type="number"
-                value={form.gameSystemId}
-                onChange={(e) => update("gameSystemId", Number(e.target.value))}
-              />
+              {loadingSystems ? (
+                <div className="text-sm text-muted-foreground">
+                  Ładowanie...
+                </div>
+              ) : (
+                <select
+                  value={form.gameSystemId}
+                  onChange={(e) =>
+                    update("gameSystemId", Number(e.target.value))
+                  }
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {gameSystems.map((system) => (
+                    <option key={system.id} value={system.id}>
+                      {system.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -278,8 +382,27 @@ export default function CreateTournamentPage() {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Limit punktów armii
+              </label>
+              <Input
+                type="number"
+                value={form.armyPointsLimit ?? ""}
+                onChange={(e) =>
+                  update(
+                    "armyPointsLimit",
+                    e.target.value ? parseInt(e.target.value) : undefined,
+                  )
+                }
+                placeholder="np. 2000"
+              />
+            </div>
+
             <fieldset className="border rounded-lg p-4 space-y-3">
-              <legend className="font-medium px-2">Punktacja</legend>
+              <legend className="font-medium px-2">
+                Punktacja - Score Points (małe punkty)
+              </legend>
 
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -313,7 +436,7 @@ export default function CreateTournamentPage() {
                       <input
                         type="checkbox"
                         checked={(form.enabledScoreTypes ?? []).includes(
-                          o.value
+                          o.value,
                         )}
                         onChange={() => toggleScoreType(o.value)}
                         className="rounded"
@@ -365,6 +488,112 @@ export default function CreateTournamentPage() {
                   />
                 </div>
               </div>
+            </fieldset>
+
+            <fieldset className="border rounded-lg p-4 space-y-3">
+              <legend className="font-medium px-2">
+                Punktacja - Tournament Points (duże punkty)
+              </legend>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  System punktacji turniejowej
+                </label>
+                <select
+                  value={form.tournamentPointsSystem ?? ""}
+                  onChange={(e) =>
+                    update(
+                      "tournamentPointsSystem",
+                      e.target.value
+                        ? (e.target.value as TournamentPointsSystem)
+                        : undefined,
+                    )
+                  }
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">-- Wybierz --</option>
+                  {tournamentPointsSystemOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {form.tournamentPointsSystem === "FIXED" && (
+                <div className="grid grid-cols-3 gap-4 bg-muted/50 p-3 rounded">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Punkty za wygraną
+                    </label>
+                    <Input
+                      type="number"
+                      value={form.pointsForWin ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        update("pointsForWin", v ? Number(v) : undefined);
+                      }}
+                      placeholder="np. 3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Punkty za remis
+                    </label>
+                    <Input
+                      type="number"
+                      value={form.pointsForDraw ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        update("pointsForDraw", v ? Number(v) : undefined);
+                      }}
+                      placeholder="np. 1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Punkty za przegraną
+                    </label>
+                    <Input
+                      type="number"
+                      value={form.pointsForLoss ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        update("pointsForLoss", v ? Number(v) : undefined);
+                      }}
+                      placeholder="np. 0"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {form.tournamentPointsSystem === "POINT_DIFFERENCE_STRICT" && (
+                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
+                  <strong>Przedziały punktowe (standardowe):</strong>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>0 różnicy: 10:10</li>
+                    <li>1-5 różnicy: 11:9</li>
+                    <li>6-10 różnicy: 12:8</li>
+                    <li>11-15 różnicy: 13:7</li>
+                    <li>16-20 różnicy: 14:6</li>
+                    <li>21+ różnicy: 15:5</li>
+                  </ul>
+                </div>
+              )}
+
+              {form.tournamentPointsSystem === "POINT_DIFFERENCE_LENIENT" && (
+                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
+                  <strong>Przedziały punktowe (łagodne):</strong>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>0-5 różnicy: 10:10</li>
+                    <li>6-10 różnicy: 11:9</li>
+                    <li>11-15 różnicy: 12:8</li>
+                    <li>16-20 różnicy: 13:7</li>
+                    <li>21-25 różnicy: 14:6</li>
+                    <li>26+ różnicy: 15:5</li>
+                  </ul>
+                </div>
+              )}
             </fieldset>
 
             <Button type="submit" disabled={!canSubmit || submitting}>

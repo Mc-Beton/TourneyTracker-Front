@@ -2,7 +2,9 @@
 
 import type { RegisterDTO, LoginDTO } from "../types/auth";
 
-const AUTH_BASE_URL = "http://localhost:8081/api/users/auth";
+const AUTH_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+  ? `${process.env.NEXT_PUBLIC_API_URL}/auth`
+  : "http://localhost:8080/auth";
 
 function parseErrorMessage(text: string): string {
   try {
