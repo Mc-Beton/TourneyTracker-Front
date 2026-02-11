@@ -13,6 +13,13 @@ export type TournamentStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+export type TournamentPhase =
+  | "AWAITING_PAIRINGS"
+  | "PAIRINGS_READY"
+  | "ROUND_ACTIVE"
+  | "ROUND_FINISHED"
+  | "TOURNAMENT_COMPLETE";
+
 import { ArmyListStatus } from "./participant";
 
 export type TournamentParticipantDTO = {
@@ -42,6 +49,7 @@ export type TournamentListItemDTO = {
   currentParticipants?: number;
   maxParticipants?: number;
   status?: TournamentStatus;
+  phase?: TournamentPhase;
   armyPointsLimit?: number;
   confirmedParticipantsCount?: number;
 };

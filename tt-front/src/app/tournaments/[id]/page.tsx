@@ -33,6 +33,7 @@ import { ArmyListForm } from "@/components/ArmyListForm";
 import { TournamentRounds } from "@/components/TournamentRounds";
 import {
   createFirstRoundPairings,
+  createNextRoundPairings,
   getTournamentRoundsView,
   startRound,
 } from "@/lib/api/tournament-rounds";
@@ -134,6 +135,22 @@ export default function TournamentDetailsPage() {
       })
       .finally(() => setLoadingMatch(false));
   }, [id, data, auth.userId, auth.token, roundsKey]);
+
+  // Auto-refresh danych turnieju gdy jest IN_PROGRESS
+  useEffect(() => {
+    if (!id || !data || data.status !== "IN_PROGRESS") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updatedTournament = await getTournamentById(parseInt(id));
+        setData(updatedTournament);
+      } catch (e) {
+        console.error("Error refreshing tournament data:", e);
+      }
+    }, 15000); // co 15 sekund
+
+    return () => clearInterval(interval);
+  }, [id, data?.status]);
 
   async function handleDelete() {
     if (!data || !auth.token) return;
@@ -358,6 +375,9 @@ export default function TournamentDetailsPage() {
     try {
       setGeneratingPairings(true);
       await createFirstRoundPairings(data.id, auth.token);
+      // Odśwież dane turnieju, aby zaktualizować phase
+      const updatedTournament = await getTournamentById(data.id);
+      setData(updatedTournament);
       setRoundsKey((prev) => prev + 1);
       setError(null);
     } catch (e) {
@@ -386,6 +406,9 @@ export default function TournamentDetailsPage() {
     try {
       setStartingRound(true);
       await startRound(data.id, 1, auth.token);
+      // Odśwież dane turnieju, aby zaktualizować phase
+      const updatedTournament = await getTournamentById(data.id);
+      setData(updatedTournament);
       setRoundsKey((prev) => prev + 1);
       setError(null);
     } catch (e) {
@@ -397,6 +420,58 @@ export default function TournamentDetailsPage() {
       }
     } finally {
       setStartingRound(false);
+    }
+  }
+
+  async function handleGenerateNextRoundPairings() {
+    if (!data || !auth.token) return;
+
+    // Znajdź następną rundę do wygenerowania
+    const completedRounds = roundsData.filter((r) => {
+      // Runda jest zakończona jeśli:
+      // 1. Status jest COMPLETED LUB
+      // 2. Wszystkie mecze są zakończone (mają gameEndTime lub status COMPLETED/FINISHED)
+      if (r.status === "COMPLETED") return true;
+      if (!r.matches || r.matches.length === 0) return false;
+      return r.matches.every(
+        (m) =>
+          m.status === "COMPLETED" ||
+          m.status === "FINISHED" ||
+          m.gameEndTime != null,
+      );
+    });
+    const nextRoundNumber = completedRounds.length + 1;
+
+    if (nextRoundNumber > data.numberOfRounds) {
+      setError("Wszystkie rundy zostały już rozegrane");
+      return;
+    }
+
+    if (
+      !confirm(
+        `Czy na pewno chcesz wygenerować pary dla rundy ${nextRoundNumber}?`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setGeneratingPairings(true);
+      await createNextRoundPairings(data.id, auth.token);
+      // Odśwież dane turnieju, aby zaktualizować phase
+      const updatedTournament = await getTournamentById(data.id);
+      setData(updatedTournament);
+      setRoundsKey((prev) => prev + 1);
+      setError(null);
+    } catch (e) {
+      console.error("Error generating next round pairings:", e);
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("Nie udało się wygenerować par");
+      }
+    } finally {
+      setGeneratingPairings(false);
     }
   }
 
@@ -916,47 +991,82 @@ export default function TournamentDetailsPage() {
                       )}
                       {data.status === "IN_PROGRESS" &&
                         (() => {
-                          const firstRound = roundsData.find(
-                            (r) => r.roundNumber === 1,
-                          );
-                          const hasMatches =
-                            firstRound && firstRound.matches.length > 0;
-                          const isRoundStarted =
-                            firstRound &&
-                            firstRound.matches.some(
-                              (m) => m.status === "IN_PROGRESS",
-                            );
+                          // Używamy phase do określania która akcja jest dostępna
+                          const { phase } = data;
 
-                          if (!hasMatches) {
+                          // Pobierz zakończone rundy
+                          const completedRounds = roundsData.filter(
+                            (r) => r.status === "COMPLETED",
+                          );
+                          const currentRoundNumber = completedRounds.length + 1;
+
+                          // AWAITING_PAIRINGS - czeka na dobranie par
+                          if (phase === "AWAITING_PAIRINGS") {
                             return (
                               <Button
-                                onClick={handleGeneratePairings}
+                                onClick={
+                                  currentRoundNumber === 1
+                                    ? handleGeneratePairings
+                                    : handleGenerateNextRoundPairings
+                                }
                                 disabled={generatingPairings}
                                 className="w-full min-h-[44px] bg-blue-600 hover:bg-blue-700"
                               >
                                 {generatingPairings
                                   ? "Dobieranie..."
-                                  : "Dobierz paringi"}
+                                  : `Dobierz pary (runda ${currentRoundNumber})`}
                               </Button>
                             );
                           }
 
-                          if (hasMatches && !isRoundStarted) {
+                          // PAIRINGS_READY - pary dobrane, czeka na start
+                          if (phase === "PAIRINGS_READY") {
                             return (
                               <Button
-                                onClick={handleStartRound}
+                                onClick={async () => {
+                                  if (!auth.token) return;
+                                  try {
+                                    setStartingRound(true);
+                                    await startRound(
+                                      data.id,
+                                      currentRoundNumber,
+                                      auth.token,
+                                    );
+                                    // Odśwież dane turnieju, aby zaktualizować phase
+                                    const updatedTournament =
+                                      await getTournamentById(data.id);
+                                    setData(updatedTournament);
+                                    setRoundsKey((prev) => prev + 1);
+                                  } catch (e) {
+                                    console.error("Error starting round:", e);
+                                    setError("Nie udało się rozpocząć rundy");
+                                  } finally {
+                                    setStartingRound(false);
+                                  }
+                                }}
                                 disabled={startingRound}
                                 className="w-full min-h-[44px] bg-green-600 hover:bg-green-700"
                               >
                                 {startingRound
                                   ? "Rozpoczynanie..."
-                                  : "Rozpocznij rundę 1"}
+                                  : `Rozpocznij rundę ${currentRoundNumber}`}
                               </Button>
                             );
                           }
 
+                          // ROUND_ACTIVE - runda w trakcie, brak przycisków akcji
+                          // TOURNAMENT_COMPLETE - turniej zakończony
                           return null;
                         })()}
+                      {!isParticipant && data.status === "ACTIVE" && (
+                        <Button
+                          onClick={handleRegister}
+                          disabled={registering}
+                          className="w-full min-h-[44px] bg-blue-600 hover:bg-blue-700"
+                        >
+                          {registering ? "Zapisywanie..." : "Zapisz się"}
+                        </Button>
+                      )}
                       <Link
                         href={`/tournaments/${data.id}/edit`}
                         className="w-full"

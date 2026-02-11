@@ -188,6 +188,14 @@ export default function MainLayout({
                   >
                     Własne gry
                   </Link>
+                  <hr className="border-white/20 my-2" />
+                  <Link
+                    href="/profile"
+                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Profil
+                  </Link>
                   <button
                     onClick={() => {
                       if (confirm("Czy na pewno chcesz się wylogować?")) {
@@ -201,7 +209,25 @@ export default function MainLayout({
                     Wyloguj
                   </button>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  <hr className="border-white/20 my-2" />
+                  <Link
+                    href="/login"
+                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Zaloguj się
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Zarejestruj się
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

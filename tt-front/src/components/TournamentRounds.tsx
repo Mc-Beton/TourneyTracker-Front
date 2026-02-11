@@ -51,9 +51,7 @@ export function TournamentRounds({
   gameSystemId,
 }: TournamentRoundsProps) {
   const auth = useAuth();
-  const [activeTab, setActiveTab] = useState<"rounds" | "stats" | "podium">(
-    "rounds",
-  );
+  const [activeTab, setActiveTab] = useState<"rounds" | "stats">("rounds");
   const [selectedRound, setSelectedRound] = useState(1);
   const [rounds, setRounds] = useState<TournamentRoundViewDTO[]>([]);
   const [roundDefinitions, setRoundDefinitions] = useState<
@@ -77,11 +75,23 @@ export function TournamentRounds({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId, tournamentStatus]);
 
+  // Auto-refresh round status and match data for organizers during IN_PROGRESS
   useEffect(() => {
-    if (isOrganizer && tournamentStatus === "ONGOING") {
+    if (isOrganizer && tournamentStatus === "IN_PROGRESS") {
       loadRoundStatus();
-      const interval = setInterval(loadRoundStatus, 30000); // Refresh every 30s
-      return () => clearInterval(interval);
+      const statusInterval = setInterval(loadRoundStatus, 30000); // Refresh every 30s
+
+      // Also refresh rounds data less frequently to update match statuses
+      const roundsInterval = setInterval(loadRoundsData, 15000); // Refresh every 15s
+
+      // Refresh stats to show updated tournament points
+      const statsInterval = setInterval(loadStatsData, 20000); // Refresh every 20s
+
+      return () => {
+        clearInterval(statusInterval);
+        clearInterval(roundsInterval);
+        clearInterval(statsInterval);
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId, selectedRound, isOrganizer, tournamentStatus]);
@@ -91,6 +101,19 @@ export function TournamentRounds({
     const currentRound = rounds.find((r) => r.roundNumber === selectedRound);
     if (!currentRound?.matches || currentRound.matches.length === 0) {
       setTimeRemaining("");
+      return;
+    }
+
+    // Check if round is completed - stop timer
+    const isRoundCompleted = currentRound.matches.every(
+      (m) =>
+        m.status === "COMPLETED" ||
+        m.status === "FINISHED" ||
+        m.gameEndTime != null,
+    );
+
+    if (isRoundCompleted) {
+      setTimeRemaining("🏁 Runda zakończona");
       return;
     }
 
@@ -384,18 +407,6 @@ export function TournamentRounds({
         >
           Statystyki
         </button>
-        {tournamentStatus === "COMPLETED" && (
-          <button
-            onClick={() => setActiveTab("podium")}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === "podium"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Podium
-          </button>
-        )}
       </div>
 
       {/* Rounds tab */}
@@ -412,17 +423,23 @@ export function TournamentRounds({
                   (m) =>
                     m.scoresSubmitted ||
                     m.status === "COMPLETED" ||
-                    m.status === "FINISHED",
+                    m.status === "FINISHED" ||
+                    m.gameEndTime != null,
                 ).length || 0
               }
               isStarted={
                 currentRound?.matches?.length > 0 &&
-                currentRound.matches[0]?.status === "IN_PROGRESS"
+                currentRound.matches.some(
+                  (m) => m.status === "IN_PROGRESS" || m.startTime != null,
+                )
               }
               isCompleted={
                 currentRound?.matches?.length > 0 &&
                 currentRound.matches.every(
-                  (m) => m.status === "COMPLETED" || m.status === "FINISHED",
+                  (m) =>
+                    m.status === "COMPLETED" ||
+                    m.status === "FINISHED" ||
+                    m.gameEndTime != null,
                 )
               }
               startTime={currentRound?.matches?.[0]?.startTime ?? undefined}
@@ -445,7 +462,9 @@ export function TournamentRounds({
                 const isStarted =
                   round?.matches &&
                   round.matches.length > 0 &&
-                  round.matches[0]?.status === "IN_PROGRESS";
+                  round.matches.some(
+                    (m) => m.status === "IN_PROGRESS" || m.startTime != null,
+                  );
 
                 return (
                   <button
@@ -479,7 +498,7 @@ export function TournamentRounds({
           )}
 
           {/* Organizer controls */}
-          {isOrganizer && tournamentStatus === "ONGOING" && (
+          {isOrganizer && tournamentStatus === "IN_PROGRESS" && (
             <Card className="mb-4">
               <CardHeader>
                 <CardTitle>Panel organizatora</CardTitle>
@@ -491,10 +510,47 @@ export function TournamentRounds({
                   </div>
                 )}
 
+                {/* Success banner when round is completed */}
+                {currentRound?.matches &&
+                  currentRound.matches.length > 0 &&
+                  currentRound.matches.every(
+                    (m) =>
+                      m.status === "COMPLETED" ||
+                      m.status === "FINISHED" ||
+                      m.gameEndTime != null,
+                  ) && (
+                    <div className="bg-green-50 border-2 border-green-500 text-green-800 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🏁</span>
+                        <h3 className="font-bold text-lg">
+                          Runda {selectedRound} zakończona!
+                        </h3>
+                      </div>
+                      <p className="text-sm mb-2">
+                        Wszystkie mecze zostały rozegrane. Wyniki zostały
+                        zapisane.
+                      </p>
+                      {selectedRound < numberOfRounds && (
+                        <p className="text-sm font-medium">
+                          💡 Przejdź do panelu &ldquo;Akcje&rdquo; aby dobierz
+                          pary dla rundy {selectedRound + 1}.
+                        </p>
+                      )}
+                      {selectedRound === numberOfRounds && (
+                        <p className="text-sm font-medium">
+                          🎉 To była ostatnia runda turnieju! Możesz zakończyć
+                          turniej.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                 <div className="flex gap-2 flex-wrap">
                   {(!currentRound?.matches ||
                     currentRound.matches.length === 0 ||
-                    currentRound.matches[0]?.status !== "IN_PROGRESS") && (
+                    !currentRound.matches.some(
+                      (m) => m.status === "IN_PROGRESS" || m.startTime != null,
+                    )) && (
                     <Button onClick={handleStartRound} disabled={loading}>
                       🚀 Rozpocznij rundę {selectedRound}
                     </Button>
@@ -502,7 +558,9 @@ export function TournamentRounds({
 
                   {currentRound?.matches &&
                     currentRound.matches.length > 0 &&
-                    currentRound.matches[0]?.status === "IN_PROGRESS" && (
+                    currentRound.matches.some(
+                      (m) => m.status === "IN_PROGRESS" || m.startTime != null,
+                    ) && (
                       <Button
                         onClick={handleExtendDeadline}
                         disabled={loading}
@@ -525,7 +583,9 @@ export function TournamentRounds({
                 {roundStatus &&
                   currentRound?.matches &&
                   currentRound.matches.length > 0 &&
-                  currentRound.matches[0]?.status === "IN_PROGRESS" && (
+                  currentRound.matches.some(
+                    (m) => m.status === "IN_PROGRESS",
+                  ) && (
                     <div className="border rounded-lg p-4 bg-gray-50">
                       <h3 className="font-bold mb-2">
                         Status rundy {selectedRound}
@@ -589,23 +649,31 @@ export function TournamentRounds({
                         </div>
                         <div className="flex flex-col gap-1 items-end">
                           {/* Status badge */}
-                          <span
-                            className={`text-xs px-2 py-1 rounded font-medium ${
-                              match.status === "IN_PROGRESS"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : match.status === "FINISHED" ||
-                                    match.status === "COMPLETED"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {match.status === "IN_PROGRESS"
-                              ? "W trakcie"
-                              : match.status === "FINISHED" ||
-                                  match.status === "COMPLETED"
-                                ? "Zakończony"
-                                : "Zaplanowany"}
-                          </span>
+                          {(() => {
+                            // Określ czy mecz jest faktycznie zakończony na podstawie danych
+                            const isFinished =
+                              match.status === "FINISHED" ||
+                              match.status === "COMPLETED" ||
+                              match.gameEndTime != null;
+
+                            return (
+                              <span
+                                className={`text-xs px-2 py-1 rounded font-medium ${
+                                  isFinished
+                                    ? "bg-green-100 text-green-800"
+                                    : match.status === "IN_PROGRESS"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {isFinished
+                                  ? "Zakończony"
+                                  : match.status === "IN_PROGRESS"
+                                    ? "W trakcie"
+                                    : "Zaplanowany"}
+                              </span>
+                            );
+                          })()}
                           {match.scoresSubmitted && (
                             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                               ✓ Wynik wpisany
@@ -743,79 +811,6 @@ export function TournamentRounds({
                 </TableBody>
               </Table>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Podium tab (for completed tournaments) */}
-      {activeTab === "podium" && podium && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">
-              Finalne podium
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center items-end gap-8 py-8">
-              {/* Second place */}
-              {podium.second && (
-                <div className="flex flex-col items-center">
-                  <div className="text-6xl mb-4">🥈</div>
-                  <div className="bg-gray-300 rounded-lg p-6 h-40 w-48 flex flex-col items-center justify-center shadow-lg">
-                    <div className="font-bold text-xl text-center">
-                      {podium.second.userName}
-                    </div>
-                    <div className="text-lg mt-2">
-                      TP: {podium.second.tournamentPoints}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      SP: {podium.second.scorePoints}
-                    </div>
-                  </div>
-                  <div className="mt-4 text-2xl font-bold">2. miejsce</div>
-                </div>
-              )}
-
-              {/* First place */}
-              {podium.first && (
-                <div className="flex flex-col items-center">
-                  <div className="text-7xl mb-4">🥇</div>
-                  <div className="bg-yellow-300 rounded-lg p-6 h-52 w-56 flex flex-col items-center justify-center shadow-2xl border-4 border-yellow-400">
-                    <div className="font-bold text-2xl text-center">
-                      {podium.first.userName}
-                    </div>
-                    <div className="text-xl mt-2">
-                      TP: {podium.first.tournamentPoints}
-                    </div>
-                    <div className="text-base text-muted-foreground">
-                      SP: {podium.first.scorePoints}
-                    </div>
-                  </div>
-                  <div className="mt-4 text-3xl font-bold">
-                    🏆 1. miejsce 🏆
-                  </div>
-                </div>
-              )}
-
-              {/* Third place */}
-              {podium.third && (
-                <div className="flex flex-col items-center">
-                  <div className="text-6xl mb-4">🥉</div>
-                  <div className="bg-orange-300 rounded-lg p-6 h-36 w-44 flex flex-col items-center justify-center shadow-lg">
-                    <div className="font-bold text-lg text-center">
-                      {podium.third.userName}
-                    </div>
-                    <div className="text-base mt-2">
-                      TP: {podium.third.tournamentPoints}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      SP: {podium.third.scorePoints}
-                    </div>
-                  </div>
-                  <div className="mt-4 text-2xl font-bold">3. miejsce</div>
-                </div>
-              )}
-            </div>
           </CardContent>
         </Card>
       )}

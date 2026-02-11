@@ -80,8 +80,8 @@ export default function MyTournamentsPage() {
         prev.map((t) =>
           t.id === tournament.id
             ? { ...t, status: newActiveState ? "ACTIVE" : "DRAFT" }
-            : t
-        )
+            : t,
+        ),
       );
     } catch (e) {
       console.error("Error toggling tournament active state:", e);
@@ -157,19 +157,23 @@ export default function MyTournamentsPage() {
                           tournament.status === "ACTIVE"
                             ? "bg-green-100 text-green-800"
                             : tournament.status === "DRAFT"
-                            ? "bg-blue-100 text-blue-800"
-                            : tournament.status === "FINISHED"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-red-100 text-red-800"
+                              ? "bg-blue-100 text-blue-800"
+                              : tournament.status === "IN_PROGRESS"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : tournament.status === "COMPLETED"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-red-100 text-red-800"
                         }`}
                       >
                         {tournament.status === "ACTIVE"
                           ? "Aktywny"
                           : tournament.status === "DRAFT"
-                          ? "Szkic"
-                          : tournament.status === "FINISHED"
-                          ? "Zakończony"
-                          : "Anulowany"}
+                            ? "Szkic"
+                            : tournament.status === "IN_PROGRESS"
+                              ? "W trakcie"
+                              : tournament.status === "COMPLETED"
+                                ? "Zakończony"
+                                : "Anulowany"}
                       </span>
                     </div>
                   </div>

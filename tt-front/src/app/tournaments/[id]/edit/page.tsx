@@ -105,6 +105,11 @@ export default function EditTournamentPage() {
       try {
         setLoading(true);
         const formData = await getTournamentEditForm(tournamentId, auth.token!);
+        // Convert datetime to date only for deadline field
+        if (formData.registrationDeadline) {
+          formData.registrationDeadline =
+            formData.registrationDeadline.split("T")[0];
+        }
         setForm(formData);
         // Load round definitions
         const definitions = await getRoundDefinitions(tournamentId, auth.token);
@@ -172,7 +177,9 @@ export default function EditTournamentPage() {
       name: form.name.trim(),
       description: form.description?.trim() || undefined,
       endDate: form.endDate?.trim() || undefined,
-      registrationDeadline: form.registrationDeadline?.trim() || undefined,
+      registrationDeadline: form.registrationDeadline?.trim()
+        ? `${form.registrationDeadline.trim()}T23:59:59`
+        : undefined,
       location: form.location?.trim() || undefined,
       venue: form.venue?.trim() || undefined,
       enabledScoreTypes:
@@ -361,10 +368,10 @@ export default function EditTournamentPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Deadline rejestracji
+                  Deadline rejestracji (do końca dnia)
                 </label>
                 <Input
-                  type="datetime-local"
+                  type="date"
                   value={form.registrationDeadline ?? ""}
                   onChange={(e) =>
                     update("registrationDeadline", e.target.value)
@@ -391,6 +398,24 @@ export default function EditTournamentPage() {
                   onChange={(e) => update("venue", e.target.value)}
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Limit punktów armii
+              </label>
+              <Input
+                type="number"
+                placeholder="np. 2000"
+                value={form.armyPointsLimit ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  update("armyPointsLimit", v ? Number(v) : undefined);
+                }}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Maksymalny limit punktów dla armii uczestników
+              </p>
             </div>
 
             <fieldset className="border rounded-lg p-4 space-y-3">

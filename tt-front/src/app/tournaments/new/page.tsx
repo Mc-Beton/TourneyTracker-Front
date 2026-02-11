@@ -158,7 +158,9 @@ export default function CreateTournamentPage() {
       name: form.name.trim(),
       description: form.description?.trim() || undefined,
       endDate: form.endDate?.trim() || undefined,
-      registrationDeadline: form.registrationDeadline?.trim() || undefined,
+      registrationDeadline: form.registrationDeadline?.trim()
+        ? `${form.registrationDeadline.trim()}T23:59:59`
+        : undefined,
       location: form.location?.trim() || undefined,
       venue: form.venue?.trim() || undefined,
       armyPointsLimit: form.armyPointsLimit,
@@ -350,10 +352,10 @@ export default function CreateTournamentPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Deadline rejestracji
+                  Deadline rejestracji (do końca dnia)
                 </label>
                 <Input
-                  type="datetime-local"
+                  type="date"
                   value={form.registrationDeadline ?? ""}
                   onChange={(e) =>
                     update("registrationDeadline", e.target.value)
