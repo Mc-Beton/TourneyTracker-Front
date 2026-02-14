@@ -13,3 +13,26 @@ export type AuthUser = {
   name: string;
   email: string;
 };
+
+export type UserProfile = {
+  id: number;
+  name: string;
+  email: string;
+  realName?: string;
+  surname?: string;
+  beginner?: boolean;
+  team?: string;
+  city?: string;
+  discordNick?: string;
+};
+
+export type UpdateProfileDTO = {
+  name?: string;
+  email?: string;
+  realName?: string;
+  surname?: string;
+  beginner?: boolean;
+  team?: string;
+  city?: string;
+  discordNick?: string;
+};

@@ -56,17 +56,12 @@ export default function MatchScoringPage() {
     loadMatchData();
   }, [auth.token, matchId]);
 
-  // Timer dla aktualnej rundy
+  // Timer dla rundy turniejowej
   useEffect(() => {
-    if (!matchData) return;
-
-    const currentRoundData = matchData.rounds.find(
-      (r) => r.roundNumber === matchData.currentRound,
-    );
-    if (!currentRoundData?.startTime) return;
+    if (!matchData?.startTime) return;
 
     const interval = setInterval(() => {
-      const start = new Date(currentRoundData.startTime!).getTime();
+      const start = new Date(matchData.startTime!).getTime();
       const now = Date.now();
       setElapsedTime(Math.floor((now - start) / 1000));
     }, 1000);
@@ -74,20 +69,14 @@ export default function MatchScoringPage() {
     return () => clearInterval(interval);
   }, [matchData]);
 
-  // Funkcja obliczająca pozostały czas rundy
+  // Funkcja obliczająca pozostały czas rundy turniejowej
   const getRemainingTime = () => {
-    if (!matchData?.gameDurationMinutes || !matchData.rounds) return null;
+    if (!matchData?.gameDurationMinutes || !matchData?.startTime) return null;
 
-    const currentRoundData = matchData.rounds.find(
-      (r) => r.roundNumber === matchData.currentRound,
-    );
-    if (!currentRoundData?.startTime) return null;
-
-    const start = new Date(currentRoundData.startTime).getTime();
+    const start = new Date(matchData.startTime).getTime();
     const now = Date.now();
-    const roundDurationMs = matchData.gameDurationMinutes * 60 * 1000;
-    const elapsed = now - start;
-    const remaining = Math.max(0, roundDurationMs - elapsed);
+    const gameEnd = start + matchData.gameDurationMinutes * 60 * 1000;
+    const remaining = Math.max(0, gameEnd - now);
 
     return Math.floor(remaining / 1000); // w sekundach
   };
@@ -560,29 +549,28 @@ export default function MatchScoringPage() {
               <CardTitle className="text-lg">
                 🎯 Runda {matchData.currentRound} / {matchData.totalRounds}
               </CardTitle>
-              {currentRoundData?.startTime &&
-                matchData.status !== "FINISHED" && (
-                  <div className="text-right">
-                    {remainingTime !== null && remainingTime > 0 ? (
-                      <div>
-                        <div className="text-2xl font-bold tabular-nums text-orange-600">
-                          ⏱️ {formatTime(remainingTime)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Pozostało do końca rundy
-                        </div>
+              {matchData.startTime && matchData.status !== "FINISHED" && (
+                <div className="text-right">
+                  {remainingTime !== null && remainingTime > 0 ? (
+                    <div>
+                      <div className="text-2xl font-bold tabular-nums text-orange-600">
+                        ⏱️ {formatTime(remainingTime)}
                       </div>
-                    ) : remainingTime === 0 ? (
-                      <div className="text-xl font-bold text-red-600">
-                        ⏰ Czas minął!
+                      <div className="text-xs text-gray-500">
+                        Pozostało do końca rundy turniejowej
                       </div>
-                    ) : (
-                      <div className="text-2xl font-bold tabular-nums">
-                        ⏱️ {formatTime(elapsedTime)}
-                      </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  ) : remainingTime === 0 ? (
+                    <div className="text-xl font-bold text-red-600">
+                      ⏰ Czas rundy turniejowej minął!
+                    </div>
+                  ) : (
+                    <div className="text-2xl font-bold tabular-nums">
+                      ⏱️ {formatTime(elapsedTime)}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className="pt-6">

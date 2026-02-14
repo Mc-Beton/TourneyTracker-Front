@@ -12,6 +12,9 @@ export type TournamentRoundDefinitionDTO = {
   byeSmallPoints: number;
   splitLargePoints: number;
   splitSmallPoints: number;
+  pairingAlgorithm: string;
+  playerLevelPairingStrategy: string | null;
+  tableAssignmentStrategy: string | null;
 };
 
 export type UpdateRoundDefinitionDTO = {
@@ -24,4 +27,7 @@ export type UpdateRoundDefinitionDTO = {
   byeSmallPoints?: number;
   splitLargePoints?: number;
   splitSmallPoints?: number;
+  pairingAlgorithm?: string;
+  playerLevelPairingStrategy?: string;
+  tableAssignmentStrategy?: string;
 };

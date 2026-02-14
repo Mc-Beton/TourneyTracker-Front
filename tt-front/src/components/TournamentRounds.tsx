@@ -136,10 +136,24 @@ export function TournamentRounds({
         startTime.getTime() + firstMatch.gameDurationMinutes * 60000,
       );
 
+      // Najpierw odliczamy czas gry
+      if (now < gameEnd) {
+        const diff = gameEnd.getTime() - now.getTime();
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        setTimeRemaining(
+          `⏰ Czas rundy: ${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
+        );
+        return;
+      }
+
+      // Po zakończeniu czasu gry - odliczamy czas na składanie wyników
       const diff = deadline.getTime() - now.getTime();
 
       if (diff <= 0) {
-        setTimeRemaining("Czas minął");
+        setTimeRemaining("❌ Czas na składanie wyników minął");
         return;
       }
 
@@ -147,25 +161,9 @@ export function TournamentRounds({
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      // Check if we're in the extra time period
-      const inExtraTime = now >= gameEnd;
-
-      if (inExtraTime) {
-        setTimeRemaining(
-          `⏱️ Czas dodatkowy: ${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
-        );
-      } else {
-        setTimeRemaining(
-          `⏰ ${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
-        );
-      }
-
-      // Warning notifications
-      const minutesRemaining = Math.floor(diff / (1000 * 60));
-      if (minutesRemaining === 30 || minutesRemaining === 15) {
-        // In a real app, you'd show a toast notification here
-        console.log(`⚠️ ${minutesRemaining} minut do końca!`);
-      }
+      setTimeRemaining(
+        `⚠️ Czas na wyniki: ${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
+      );
     };
 
     updateTimer();

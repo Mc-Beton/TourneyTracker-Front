@@ -56,6 +56,11 @@ export function RoundDefinitionEditor({
     byeSmallPoints: currentDefinition.byeSmallPoints,
     splitLargePoints: currentDefinition.splitLargePoints,
     splitSmallPoints: currentDefinition.splitSmallPoints,
+    pairingAlgorithm: currentDefinition.pairingAlgorithm || "STANDARD",
+    playerLevelPairingStrategy:
+      currentDefinition.playerLevelPairingStrategy || "NONE",
+    tableAssignmentStrategy:
+      currentDefinition.tableAssignmentStrategy || "BEST_FIRST",
   });
 
   useEffect(() => {
@@ -276,6 +281,227 @@ export function RoundDefinitionEditor({
                 </div>
               </div>
             </div>
+
+            {/* Pairing Algorithm - tylko dla rundy 1 */}
+            {roundNumber === 1 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Algorytm parowania</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="algorithmStandard"
+                      name="pairingAlgorithm"
+                      value="STANDARD"
+                      checked={form.pairingAlgorithm === "STANDARD"}
+                      onChange={(e) =>
+                        update("pairingAlgorithm", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="algorithmStandard"
+                      className="cursor-pointer font-normal"
+                    >
+                      Standardowy (losowe przetasowanie)
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="algorithmCustom"
+                      name="pairingAlgorithm"
+                      value="CUSTOM"
+                      checked={form.pairingAlgorithm === "CUSTOM"}
+                      onChange={(e) =>
+                        update("pairingAlgorithm", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="algorithmCustom"
+                      className="cursor-pointer font-normal"
+                    >
+                      Custom (dostosowany algorytm)
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Player Level Pairing Strategy - tylko dla rundy 1 i CUSTOM */}
+            {roundNumber === 1 && form.pairingAlgorithm === "CUSTOM" && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">
+                  Strategia parowania według poziomu gracza
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="strategyNone"
+                      name="playerLevelPairingStrategy"
+                      value="NONE"
+                      checked={form.playerLevelPairingStrategy === "NONE"}
+                      onChange={(e) =>
+                        update("playerLevelPairingStrategy", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="strategyNone"
+                      className="cursor-pointer font-normal"
+                    >
+                      Brak - losowe parowanie
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="strategyBeginnersWithVeterans"
+                      name="playerLevelPairingStrategy"
+                      value="BEGINNERS_WITH_VETERANS"
+                      checked={
+                        form.playerLevelPairingStrategy ===
+                        "BEGINNERS_WITH_VETERANS"
+                      }
+                      onChange={(e) =>
+                        update("playerLevelPairingStrategy", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="strategyBeginnersWithVeterans"
+                      className="cursor-pointer font-normal"
+                    >
+                      Początkujący z weteranami - łączenie różnych poziomów
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="strategyBeginnersWithBeginners"
+                      name="playerLevelPairingStrategy"
+                      value="BEGINNERS_WITH_BEGINNERS"
+                      checked={
+                        form.playerLevelPairingStrategy ===
+                        "BEGINNERS_WITH_BEGINNERS"
+                      }
+                      onChange={(e) =>
+                        update("playerLevelPairingStrategy", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="strategyBeginnersWithBeginners"
+                      className="cursor-pointer font-normal"
+                    >
+                      Początkujący z początkującymi - parowanie podobnych
+                      poziomów
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Pairing Algorithm - dla rund kolejnych (>1) */}
+            {roundNumber > 1 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">
+                  Algorytm parowania graczy
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="algorithmStandardNext"
+                      name="pairingAlgorithmNext"
+                      value="STANDARD"
+                      checked={form.pairingAlgorithm === "STANDARD"}
+                      onChange={(e) =>
+                        update("pairingAlgorithm", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="algorithmStandardNext"
+                      className="cursor-pointer font-normal"
+                    >
+                      Standardowy (ranking)
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="algorithmCustomNext"
+                      name="pairingAlgorithmNext"
+                      value="CUSTOM"
+                      checked={form.pairingAlgorithm === "CUSTOM"}
+                      onChange={(e) =>
+                        update("pairingAlgorithm", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="algorithmCustomNext"
+                      className="cursor-pointer font-normal"
+                    >
+                      Dynamiczny (dostosowany)
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Table Assignment Strategy - dla rund kolejnych i CUSTOM */}
+            {roundNumber > 1 && form.pairingAlgorithm === "CUSTOM" && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">
+                  Strategia przypisywania stołów
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="tableBestFirst"
+                      name="tableAssignmentStrategy"
+                      value="BEST_FIRST"
+                      checked={form.tableAssignmentStrategy === "BEST_FIRST"}
+                      onChange={(e) =>
+                        update("tableAssignmentStrategy", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="tableBestFirst"
+                      className="cursor-pointer font-normal"
+                    >
+                      Najlepsi do pierwszych stołów - stoły sekwencyjnie wg
+                      rankingu
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="tableRandom"
+                      name="tableAssignmentStrategy"
+                      value="RANDOM"
+                      checked={form.tableAssignmentStrategy === "RANDOM"}
+                      onChange={(e) =>
+                        update("tableAssignmentStrategy", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="tableRandom"
+                      className="cursor-pointer font-normal"
+                    >
+                      Losowe - każda para dostaje losowy numer stołu
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

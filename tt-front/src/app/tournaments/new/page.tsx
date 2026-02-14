@@ -91,6 +91,7 @@ export default function CreateTournamentPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [gameSystems, setGameSystems] = useState<IdNameDTO[]>([]);
   const [loadingSystems, setLoadingSystems] = useState(true);
 
@@ -122,6 +123,14 @@ export default function CreateTournamentPage() {
     value: CreateTournamentDTO[K],
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    // Clear field error when user starts typing
+    if (fieldErrors[key as string]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[key as string];
+        return next;
+      });
+    }
   }
 
   function toggleScoreType(value: string) {
@@ -139,6 +148,7 @@ export default function CreateTournamentPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
     console.log("Form submitted");
     console.log("Auth state:", {
@@ -181,8 +191,27 @@ export default function CreateTournamentPage() {
       router.push(`/tournaments/${created.id}`);
     } catch (e: unknown) {
       console.error("Error creating tournament:", e);
-      if (e instanceof Error) setError(e.message);
-      else setError("Nieznany błąd");
+      if (e instanceof Error) {
+        const errorMessage = e.message;
+
+        // Parse error message and map to field
+        const errors: Record<string, string> = {};
+        if (errorMessage.includes("Czas trwania rundy")) {
+          errors.roundDurationMinutes = errorMessage;
+        } else if (errorMessage.includes("Data rozpoczęcia")) {
+          errors.startDate = errorMessage;
+        } else if (errorMessage.includes("Liczba rund")) {
+          errors.numberOfRounds = errorMessage;
+        }
+        setFieldErrors(errors);
+
+        // Set general error only if no field-specific error was found
+        if (Object.keys(errors).length === 0) {
+          setError(errorMessage);
+        }
+      } else {
+        setError("Nieznany błąd");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -196,7 +225,7 @@ export default function CreateTournamentPage() {
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="mb-4 text-destructive whitespace-pre-wrap">
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md">
               {error}
             </div>
           )}
@@ -226,7 +255,17 @@ export default function CreateTournamentPage() {
                   type="date"
                   value={form.startDate}
                   onChange={(e) => update("startDate", e.target.value)}
+                  className={
+                    fieldErrors.startDate
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }
                 />
+                {fieldErrors.startDate && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {fieldErrors.startDate}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -251,7 +290,17 @@ export default function CreateTournamentPage() {
                   onChange={(e) =>
                     update("numberOfRounds", Number(e.target.value))
                   }
+                  className={
+                    fieldErrors.numberOfRounds
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }
                 />
+                {fieldErrors.numberOfRounds && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {fieldErrors.numberOfRounds}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -265,7 +314,17 @@ export default function CreateTournamentPage() {
                   onChange={(e) =>
                     update("roundDurationMinutes", Number(e.target.value))
                   }
+                  className={
+                    fieldErrors.roundDurationMinutes
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }
                 />
+                {fieldErrors.roundDurationMinutes && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {fieldErrors.roundDurationMinutes}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -401,7 +460,8 @@ export default function CreateTournamentPage() {
               />
             </div>
 
-            <fieldset className="border rounded-lg p-4 space-y-3">
+            {/* Tymczasowo ukryte - przyda się w przyszłych rozwojach */}
+            <fieldset className="border rounded-lg p-4 space-y-3 hidden">
               <legend className="font-medium px-2">
                 Punktacja - Score Points (małe punkty)
               </legend>

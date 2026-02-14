@@ -53,12 +53,6 @@ export default function MainLayout({
             </Link>
 
             <nav className="hidden md:flex gap-3">
-              <Link
-                href="/tournaments"
-                className="hover:underline whitespace-nowrap text-primary-foreground"
-              >
-                Lista
-              </Link>
               {mounted && auth.isAuthenticated && (
                 <>
                   <Link
@@ -66,12 +60,6 @@ export default function MainLayout({
                     className="hover:underline whitespace-nowrap text-primary-foreground"
                   >
                     Moje turnieje
-                  </Link>
-                  <Link
-                    href="/tournaments/new"
-                    className="hover:underline whitespace-nowrap text-primary-foreground"
-                  >
-                    Utwórz turniej
                   </Link>
                   <Link
                     href="/single-matches/my"
@@ -158,13 +146,6 @@ export default function MainLayout({
         {mobileMenuOpen && mounted && (
           <div className="md:hidden absolute left-0 right-0 top-full bg-[#00BCD4] shadow-lg z-50 border-t border-white/20">
             <div className="px-3 py-3 space-y-2">
-              <Link
-                href="/tournaments"
-                className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Lista turniejów
-              </Link>
               {auth.isAuthenticated ? (
                 <>
                   <Link
@@ -173,13 +154,6 @@ export default function MainLayout({
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Moje turnieje
-                  </Link>
-                  <Link
-                    href="/tournaments/new"
-                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Utwórz turniej
                   </Link>
                   <Link
                     href="/single-matches/my"
