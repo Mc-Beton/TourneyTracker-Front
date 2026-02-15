@@ -7,13 +7,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 export async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const token = readToken();
 
+  // Przygotuj nagłówki - najpierw z parametrów
   const finalHeaders: Record<string, string> = {
-    ...(init?.headers ?? {}),
     "Content-Type": "application/json",
+    ...(init?.headers ?? {}),
   };
 
-  // Dodaj token JWT jeśli istnieje
-  if (token) {
+  // Dodaj token JWT tylko jeśli nie został przekazany w parametrach
+  if (token && !finalHeaders["Authorization"]) {
     finalHeaders["Authorization"] = `Bearer ${token}`;
   }
 
