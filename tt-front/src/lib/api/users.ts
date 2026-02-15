@@ -33,6 +33,3 @@ export async function updateProfile(data: UpdateProfileDTO, token: string) {
     body: JSON.stringify(data),
   });
 }
-
-  return (await res.json()) as UserProfile;
-}
