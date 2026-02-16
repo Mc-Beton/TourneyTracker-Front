@@ -16,7 +16,7 @@ export function searchUsers(query: string, token: string, limit: number = 10) {
 }
 
 export async function getProfile(token: string) {
-  return http<UserProfile>("/profile", {
+  return http<UserProfile>("/api/users/profile", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -24,7 +24,7 @@ export async function getProfile(token: string) {
 }
 
 export async function updateProfile(data: UpdateProfileDTO, token: string) {
-  return http<UserProfile>("/profile", {
+  return http<UserProfile>("/api/users/profile", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

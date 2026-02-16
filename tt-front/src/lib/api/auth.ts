@@ -2,9 +2,7 @@
 
 import type { RegisterDTO, LoginDTO } from "../types/auth";
 
-const AUTH_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-  ? `${process.env.NEXT_PUBLIC_API_URL}/auth`
-  : "http://localhost:8080/auth";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 function parseErrorMessage(text: string): string {
   try {
@@ -28,7 +26,7 @@ function parseErrorMessage(text: string): string {
 }
 
 export async function login(dto: LoginDTO): Promise<string> {
-  const res = await fetch(`${AUTH_BASE_URL}/login`, {
+  const res = await fetch(`${API_BASE_URL}/api/users/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(dto),
@@ -41,7 +39,7 @@ export async function login(dto: LoginDTO): Promise<string> {
 }
 
 export async function register(dto: RegisterDTO): Promise<string> {
-  const res = await fetch(`${AUTH_BASE_URL}/register`, {
+  const res = await fetch(`${API_BASE_URL}/api/users/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(dto),
