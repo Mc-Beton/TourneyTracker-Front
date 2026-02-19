@@ -155,7 +155,7 @@ export default function RegisterPage() {
 
         {success && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
-            <Card className="max-w-md w-full">
+            <Card className="max-w-md w-full bg-card text-card-foreground">
               <CardContent className="pt-6 text-center space-y-4">
                 <div className="text-6xl">✅</div>
                 <h2 className="text-2xl font-bold">Rejestracja zakończona!</h2>

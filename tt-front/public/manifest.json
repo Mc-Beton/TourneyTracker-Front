@@ -2,23 +2,24 @@
   "name": "TourneyTracker - System Turniejowy",
   "short_name": "TourneyTracker",
   "description": "System zarządzania turniejami i wynikami gier",
-  "start_url": "/",
+  "start_url": "/tournaments",
+  "scope": "/tournaments",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
   "icons": [
     {
+      "src": "/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/icon-maskable-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
     },
     {
       "src": "/icon-512x512.png",
