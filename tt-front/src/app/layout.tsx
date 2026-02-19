@@ -3,13 +3,13 @@ import { AuthProvider } from "@/lib/auth/AuthProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TourneyTracker - System Turniejowy",
+  title: "WarBracket - System Turniejowy",
   description: "System zarządzania turniejami i wynikami gier",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "TourneyTracker",
+    title: "WarBracket",
   },
   formatDetection: {
     telephone: false,

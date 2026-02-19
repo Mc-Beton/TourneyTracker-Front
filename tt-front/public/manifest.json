@@ -1,6 +1,6 @@
 {
-  "name": "TourneyTracker - System Turniejowy",
-  "short_name": "TourneyTracker",
+  "name": "WarBracket - System Turniejowy",
+  "short_name": "WarBracket",
   "description": "System zarządzania turniejami i wynikami gier",
   "start_url": "/tournaments",
   "scope": "/tournaments",

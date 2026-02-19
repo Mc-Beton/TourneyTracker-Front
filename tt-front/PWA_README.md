@@ -2,7 +2,7 @@
 
 ## ✅ Implementacja zakończona!
 
-PWA zostało pomyślnie skonfigurowane w aplikacji TourneyTracker.
+PWA zostało pomyślnie skonfigurowane w aplikacji WarBracket.
 
 ### Co zostało zrobione:
 
