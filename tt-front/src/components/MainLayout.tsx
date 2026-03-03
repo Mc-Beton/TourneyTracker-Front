@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth/useAuth";
+import { useGameSystem } from "@/lib/context/GameSystemContext";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { NotificationBell } from "./NotificationBell";
@@ -16,6 +17,7 @@ export default function MainLayout({
   backAction?: () => void;
 }) {
   const auth = useAuth();
+  const { selectedGameSystemId, setSelectedGameSystemId, gameSystems } = useGameSystem();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -41,16 +43,32 @@ export default function MainLayout({
               <span className="text-xl">☰</span>
             </button>
 
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80">
-              <Image
-                src="/logo.png"
-                alt="WarBracket Logo"
-                width={128}
-                height={128}
-                className="h-24 sm:h-32 w-auto"
-                priority
-              />
-            </Link>
+            <div className="flex flex-col items-start gap-1">
+              <Link href="/" className="flex items-center gap-2 hover:opacity-80">
+                <Image
+                  src="/logo.png"
+                  alt="WarBracket Logo"
+                  width={128}
+                  height={128}
+                  className="h-24 sm:h-32 w-auto"
+                  priority
+                />
+              </Link>
+              {mounted && (
+                <select
+                  value={selectedGameSystemId}
+                  onChange={(e) => setSelectedGameSystemId(e.target.value)}
+                  className="hidden md:block w-full max-w-[200px] text-black text-sm p-1 rounded border border-gray-300"
+                >
+                  <option value="all">Wszystkie systemy</option>
+                  {gameSystems.map((sys) => (
+                    <option key={sys.id} value={sys.id}>
+                      {sys.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
 
             <nav className="hidden md:flex gap-3">
               {mounted && auth.isAuthenticated && (
@@ -152,6 +170,20 @@ export default function MainLayout({
         {mobileMenuOpen && mounted && (
           <div className="md:hidden absolute left-0 right-0 top-full bg-[#00BCD4] shadow-lg z-50 border-t border-white/20">
             <div className="px-3 py-3 space-y-2">
+              <div className="mb-2">
+                <select
+                  value={selectedGameSystemId}
+                  onChange={(e) => setSelectedGameSystemId(e.target.value)}
+                  className="w-full p-2 rounded text-black border border-gray-300"
+                >
+                  <option value="all">Wszystkie systemy</option>
+                  {gameSystems.map((sys) => (
+                    <option key={sys.id} value={sys.id}>
+                      {sys.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {auth.isAuthenticated ? (
                 <>
                   <Link

@@ -11,47 +11,31 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { getTournaments } from "@/lib/api/tournaments";
-import { getGameSystems } from "@/lib/api/systems";
+import { useGameSystem } from "@/lib/context/GameSystemContext";
 import type { TournamentListItemDTO } from "@/lib/types/tournament";
-import { IdNameDTO } from "@/lib/types/systems";
 import MainLayout from "@/components/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function TournamentListPage() {
   const [items, setItems] = useState<TournamentListItemDTO[]>([]);
-  const [gameSystems, setGameSystems] = useState<IdNameDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedGameSystemId, setSelectedGameSystemId] =
-    useState<string>("all");
+  const { selectedGameSystemId } = useGameSystem();
+  
   const [activeTab, setActiveTab] = useState<
     "future" | "ongoing" | "completed"
   >("future");
 
   useEffect(() => {
-    const savedGameSystem = localStorage.getItem("selectedGameSystemId");
-    if (savedGameSystem) {
-      setSelectedGameSystemId(savedGameSystem);
-    }
-
-    Promise.all([getTournaments(), getGameSystems()])
-      .then(([tournaments, systems]) => {
+    getTournaments()
+      .then((tournaments) => {
         setItems(tournaments);
-        setGameSystems(systems);
-
-        // Auto-select tab logic can be added here if needed
       })
       .catch((e: unknown) =>
         setError(e instanceof Error ? e.message : "Unknown error"),
       )
       .finally(() => setLoading(false));
   }, []);
-
-  const handleGameSystemChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSelectedGameSystemId(value);
-    localStorage.setItem("selectedGameSystemId", value);
-  };
 
   const getFilteredTournaments = (
     category: "future" | "ongoing" | "completed",
@@ -101,21 +85,6 @@ export default function TournamentListPage() {
     <MainLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Turnieje</h1>
-
-        <div className="w-full sm:w-auto">
-          <select
-            className="w-full sm:w-[200px] p-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:outline-none"
-            value={selectedGameSystemId}
-            onChange={handleGameSystemChange}
-          >
-            <option value="all">Wszystkie systemy</option>
-            {gameSystems.map((gs) => (
-              <option key={gs.id} value={gs.id.toString()}>
-                {gs.name}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* Tabs */}

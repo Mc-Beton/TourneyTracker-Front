@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
+import { GameSystemProvider } from "@/lib/context/GameSystemContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -78,7 +79,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-maskable-192x192.png" />
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <GameSystemProvider>{children}</GameSystemProvider>
+        </AuthProvider>
       </body>
     </html>
   );

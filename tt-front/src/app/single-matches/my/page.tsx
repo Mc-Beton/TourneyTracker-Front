@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/useAuth";
+import { useGameSystem } from "@/lib/context/GameSystemContext";
 import { getMySingleMatches } from "@/lib/api/singleMatches";
 import type { SingleMatchResponseDTO } from "@/lib/types/singleMatch";
 import MainLayout from "@/components/MainLayout";
@@ -11,6 +12,7 @@ import Link from "next/link";
 
 export default function MySingleMatchesPage() {
   const auth = useAuth();
+  const { selectedGameSystemId } = useGameSystem();
   const [matches, setMatches] = useState<SingleMatchResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +49,11 @@ export default function MySingleMatchesPage() {
       </MainLayout>
     );
 
+  const filteredMatches = matches.filter((m) => {
+    if (selectedGameSystemId === "all") return true;
+    return m.gameSystemId.toString() === selectedGameSystemId;
+  });
+
   return (
     <MainLayout>
       <Card>
@@ -59,13 +66,15 @@ export default function MySingleMatchesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {matches.length === 0 ? (
+          {filteredMatches.length === 0 ? (
             <p className="text-muted-foreground text-sm sm:text-base">
-              Nie masz jeszcze żadnych gier
+              {matches.length === 0
+                ? "Nie masz jeszcze żadnych gier"
+                : "Nie znaleziono gier dla wybranego systemu"}
             </p>
           ) : (
             <div className="space-y-4">
-              {matches.map((match) => {
+              {filteredMatches.map((match) => {
                 let statusLabel = "Oczekuje";
                 let statusColor = "bg-gray-100 text-gray-800";
 
