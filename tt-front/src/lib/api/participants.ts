@@ -74,4 +74,18 @@ export const participantApi = {
       },
     );
   },
+
+  updateAdditionalPoints: async (
+    tournamentId: number,
+    userId: number,
+    additionalPoints: number,
+  ): Promise<void> => {
+    await http(
+      `/api/tournaments/${tournamentId}/participants/${userId}/additional-points`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ additionalPoints }),
+      },
+    );
+  },
 };

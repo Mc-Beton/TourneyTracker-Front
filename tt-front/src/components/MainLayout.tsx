@@ -67,6 +67,12 @@ export default function MainLayout({
                   >
                     Własne gry
                   </Link>
+                  <Link
+                    href="/teams/my"
+                    className="hover:underline whitespace-nowrap text-primary-foreground"
+                  >
+                    Moje drużyny
+                  </Link>
                 </>
               )}
             </nav>
@@ -161,6 +167,13 @@ export default function MainLayout({
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Własne gry
+                  </Link>
+                  <Link
+                    href="/teams/my"
+                    className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Moje drużyny
                   </Link>
                   <hr className="border-white/20 my-2" />
                   <Link

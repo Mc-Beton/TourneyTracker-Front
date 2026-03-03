@@ -31,6 +31,7 @@ export type TournamentParticipantDTO = {
   armyListStatus: ArmyListStatus;
   armyFactionName: string | null;
   armyName: string | null;
+  additionalPoints?: number;
 };
 
 export type TournamentListItemDTO = {

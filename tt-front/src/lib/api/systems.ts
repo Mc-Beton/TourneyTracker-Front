@@ -3,11 +3,13 @@
 import { http } from "./http";
 import type { IdNameDTO } from "../types/systems";
 
-export function getGameSystems(token: string) {
+export function getGameSystems(token?: string) {
+  const headers: HeadersInit = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   return http<IdNameDTO[]>("/api/systems/game-systems", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
   });
 }
 

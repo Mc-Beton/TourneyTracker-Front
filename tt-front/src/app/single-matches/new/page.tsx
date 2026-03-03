@@ -73,7 +73,7 @@ export default function NewSingleMatchPage() {
 
   // User search debounced
   useEffect(() => {
-    if (!auth.token || isHotSeat || userSearchQuery.length < 4) {
+    if (!auth.token || isHotSeat || userSearchQuery.length < 3) {
       setUserSearchResults([]);
       return;
     }
@@ -368,9 +368,9 @@ export default function NewSingleMatchPage() {
                     ))}
                   </div>
                 )}
-                {userSearchQuery.length > 0 && userSearchQuery.length < 4 && (
+                {userSearchQuery.length > 0 && userSearchQuery.length < 3 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Wpisz co najmniej 4 znaki aby wyszukać
+                    Wpisz co najmniej 3 znaki aby wyszukać
                   </p>
                 )}
               </div>

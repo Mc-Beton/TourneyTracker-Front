@@ -23,6 +23,7 @@ import {
 } from "@/lib/api/tournament-rounds";
 import { getRoundDefinitions } from "@/lib/api/roundDefinitions";
 import { RoundInfoCard } from "./RoundInfoCard";
+import { MatchDetailsModal } from "./MatchDetailsModal";
 import { useAuth } from "@/lib/auth/useAuth";
 import {
   Table,
@@ -62,6 +63,7 @@ export function TournamentRounds({
   const [roundStatus, setRoundStatus] = useState<RoundStatusDTO | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
 
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
@@ -639,7 +641,8 @@ export function TournamentRounds({
                   {currentRound.matches.map((match) => (
                     <div
                       key={match.tableNumber}
-                      className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer relative hover:border-blue-300"
+                      onClick={() => setSelectedMatchId(match.matchId)}
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="text-lg font-bold">
@@ -742,9 +745,10 @@ export function TournamentRounds({
                         match.status !== "FINISHED" && (
                           <div className="mt-3 pt-3 border-t">
                             <Button
-                              onClick={() =>
-                                handleStartIndividualMatch(match.matchId)
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartIndividualMatch(match.matchId);
+                              }}
                               disabled={loading}
                               size="sm"
                               className="w-full"
@@ -812,6 +816,12 @@ export function TournamentRounds({
           </CardContent>
         </Card>
       )}
+
+      <MatchDetailsModal
+        matchId={selectedMatchId}
+        isOpen={!!selectedMatchId}
+        onClose={() => setSelectedMatchId(null)}
+      />
     </div>
   );
 }

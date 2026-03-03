@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import MainLayout from "@/components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getProfile, updateProfile } from "@/lib/api/users";
+import { getProfile, updateProfile, searchCities } from "@/lib/api/users";
 import type { UserProfile, UpdateProfileDTO } from "@/lib/types/auth";
+import { Input } from "@/components/ui/input";
 
 export default function ProfilePage() {
   const auth = useAuth();
@@ -16,6 +17,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // City Autocomplete
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
 
   const [formData, setFormData] = useState<UpdateProfileDTO>({
     name: "",
@@ -36,6 +41,21 @@ export default function ProfilePage() {
 
     loadProfile();
   }, [auth.isAuthenticated, router]);
+
+  useEffect(() => {
+      if (!isEditing || !auth.token || !formData.city || formData.city.length < 3) {
+          setCitySuggestions([]);
+          return;
+      }
+      
+      const timer = setTimeout(() => {
+          searchCities(formData.city!, auth.token!, 5)
+              .then(setCitySuggestions)
+              .catch(e => console.error("Error searching cities", e));
+      }, 300);
+      
+      return () => clearTimeout(timer);
+  }, [formData.city, auth.token, isEditing]);
 
   const loadProfile = async () => {
     if (!auth.token) return;
@@ -298,7 +318,7 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium mb-1">
                     Miejscowość
                   </label>
@@ -308,9 +328,35 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
+                    onFocus={() => setShowCitySuggestions(true)}
+                    onBlur={() => {
+                        // Delay closing to allow click on suggestion
+                        setTimeout(() => setShowCitySuggestions(false), 200);
+                    }}
                     className="w-full px-3 py-2 border rounded-md"
                     placeholder="np. Warszawa"
                   />
+                  {showCitySuggestions && citySuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full bg-popover border rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+                          {citySuggestions.map((city, idx) => (
+                              <div
+                                  key={idx}
+                                  className="px-3 py-2 hover:bg-accent cursor-pointer text-sm text-popover-foreground"
+                                  onClick={() => {
+                                      setFormData({ ...formData, city: city });
+                                      setShowCitySuggestions(false);
+                                  }}
+                              >
+                                  {city}
+                              </div>
+                          ))}
+                      </div>
+                  )}
+                  {formData.city && formData.city.length > 0 && formData.city.length < 3 && isEditing && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                          Wpisz co najmniej 3 znaki, aby zobaczyć podpowiedzi.
+                      </p>
+                  )}
                 </div>
 
                 <div>

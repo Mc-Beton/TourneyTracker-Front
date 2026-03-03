@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/status-badges";
 import { participantApi } from "@/lib/api/participants";
 import { ArmyListReviewModal } from "@/components/ArmyListReviewModal";
+import { AdditionalPointsModal } from "@/components/AdditionalPointsModal";
 import { ArmyListForm } from "@/components/ArmyListForm";
 import { TournamentRounds } from "@/components/TournamentRounds";
 import {
@@ -39,6 +40,14 @@ import {
 } from "@/lib/api/tournament-rounds";
 import type { TournamentRoundViewDTO } from "@/lib/types/tournament";
 import { getCurrentMatch, type CurrentMatchDTO } from "@/lib/api/singleMatches";
+import {
+  getChallenges,
+  createChallenge,
+  acceptChallenge,
+  rejectChallenge,
+  cancelChallenge,
+  type TournamentChallengeDTO,
+} from "@/lib/api/challenges";
 
 export default function TournamentDetailsPage() {
   const params = useParams();
@@ -73,6 +82,16 @@ export default function TournamentDetailsPage() {
     name: string;
   } | null>(null);
   const [showArmyListForm, setShowArmyListForm] = useState(false);
+  const [pointsModalOpen, setPointsModalOpen] = useState(false);
+  const [selectedParticipantForPoints, setSelectedParticipantForPoints] =
+    useState<{
+      userId: number;
+      name: string;
+      points: number;
+    } | null>(null);
+  const [challenges, setChallenges] = useState<TournamentChallengeDTO[]>([]);
+  const [loadingChallenges, setLoadingChallenges] = useState(false);
+  const [challengeActionLoading, setChallengeActionLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -136,6 +155,26 @@ export default function TournamentDetailsPage() {
       .finally(() => setLoadingMatch(false));
   }, [id, data, auth.userId, auth.token, roundsKey]);
 
+  useEffect(() => {
+    const isParticipant =
+      auth.userId && data?.participantIds.includes(auth.userId);
+
+    if (
+      !id ||
+      !data ||
+      !isParticipant ||
+      data.status !== "ACTIVE" ||
+      !auth.token
+    )
+      return;
+
+    setLoadingChallenges(true);
+    getChallenges(parseInt(id), auth.token)
+      .then(setChallenges)
+      .catch((e) => console.error("Error loading challenges:", e))
+      .finally(() => setLoadingChallenges(false));
+  }, [id, data?.status, auth.userId, auth.token, challengeActionLoading]);
+
   // Auto-refresh danych turnieju gdy jest IN_PROGRESS
   useEffect(() => {
     if (!id || !data || data.status !== "IN_PROGRESS") return;
@@ -151,6 +190,67 @@ export default function TournamentDetailsPage() {
 
     return () => clearInterval(interval);
   }, [id, data?.status]);
+
+  async function handleCreateChallenge(opponentId: number) {
+    if (!data || !auth.token) return;
+    setError(null);
+    setChallengeActionLoading(true);
+    try {
+      await createChallenge(data.id, opponentId, auth.token);
+    } catch (e) {
+      console.error("Error creating challenge:", e);
+      if (e instanceof Error && e.message) {
+        setError(e.message);
+      } else {
+        setError("Nie udało się utworzyć wyzwania");
+      }
+    } finally {
+      setChallengeActionLoading(false);
+    }
+  }
+
+  async function handleAcceptChallenge(challengeId: number) {
+    if (!data || !auth.token) return;
+    setError(null);
+    setChallengeActionLoading(true);
+    try {
+      await acceptChallenge(data.id, challengeId, auth.token);
+    } catch (e) {
+      console.error("Error accepting challenge:", e);
+      setError("Nie udało się zaakceptować wyzwania");
+    } finally {
+      setChallengeActionLoading(false);
+    }
+  }
+
+  async function handleRejectChallenge(challengeId: number) {
+    if (!data || !auth.token) return;
+    setError(null);
+    setChallengeActionLoading(true);
+    try {
+      await rejectChallenge(data.id, challengeId, auth.token);
+    } catch (e) {
+      console.error("Error rejecting challenge:", e);
+      setError("Nie udało się odrzucić wyzwania");
+    } finally {
+      setChallengeActionLoading(false);
+    }
+  }
+
+  async function handleCancelChallenge(challengeId: number) {
+    if (!data || !auth.token) return;
+    if (!confirm("Czy na pewno chcesz anulować to wyzwanie?")) return;
+    setError(null);
+    setChallengeActionLoading(true);
+    try {
+      await cancelChallenge(data.id, challengeId, auth.token);
+    } catch (e) {
+      console.error("Error cancelling challenge:", e);
+      setError("Nie udało się anulować wyzwania");
+    } finally {
+      setChallengeActionLoading(false);
+    }
+  }
 
   async function handleDelete() {
     if (!data || !auth.token) return;
@@ -361,6 +461,26 @@ export default function TournamentDetailsPage() {
     setConfirmedParticipants(confirmedList);
   }
 
+  function handleOpenPointsModal(userId: number, name: string, points: number) {
+    setSelectedParticipantForPoints({
+      userId,
+      name,
+      points,
+    });
+    setPointsModalOpen(true);
+  }
+
+  async function handlePointsUpdated() {
+    if (!data) return;
+    // Refresh participant lists after points update
+    const [pending, confirmedList] = await Promise.all([
+      getPendingParticipants(data.id),
+      getConfirmedParticipants(data.id),
+    ]);
+    setPendingParticipants(pending);
+    setConfirmedParticipants(confirmedList);
+  }
+
   async function handleGeneratePairings() {
     if (!data || !auth.token) return;
 
@@ -500,6 +620,33 @@ export default function TournamentDetailsPage() {
   const isParticipant =
     auth.userId && data.participantIds.includes(auth.userId);
 
+  // Challenge logic
+  const myIncomingChallenges = challenges.filter(
+    (c) => c.opponentId === auth.userId && c.status === "PENDING",
+  );
+  const myOutgoingChallenges = challenges.filter(
+    (c) =>
+      c.challengerId === auth.userId &&
+      (c.status === "PENDING" ||
+        c.status === "ACCEPTED" ||
+        c.status === "REJECTED"),
+  );
+  const myAcceptedIncoming = challenges.find(
+    (c) => c.opponentId === auth.userId && c.status === "ACCEPTED",
+  );
+
+  // Determine if user can challenge others
+  // Can challenge if: no pending outgoing, no accepted outgoing, no accepted incoming
+  const myPendingOutgoing = myOutgoingChallenges.find(
+    (c) => c.status === "PENDING",
+  );
+  const myAcceptedOutgoing = myOutgoingChallenges.find(
+    (c) => c.status === "ACCEPTED",
+  );
+
+  const canChallenge =
+    !myPendingOutgoing && !myAcceptedOutgoing && !myAcceptedIncoming;
+
   return (
     <MainLayout>
       {/* Panel "Twój mecz" dla uczestników - na górze */}
@@ -631,6 +778,129 @@ export default function TournamentDetailsPage() {
             </CardContent>
           </Card>
 
+          {/* Challenges Section - Only visible if participant and ACTIVE */}
+          {isParticipant && data.status === "ACTIVE" && (
+            <div className="mt-6 space-y-4">
+              {/* Accepted Match (Challenge) */}
+              {(myAcceptedOutgoing || myAcceptedIncoming) && (
+                <Card className="bg-green-50 border-green-200">
+                  <CardHeader>
+                    <CardTitle className="text-green-800">
+                      Twoje wyzwanie (ZAAKCEPTOWANE)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>
+                      Masz zaplanowany mecz z:{" "}
+                      <strong>
+                        {myAcceptedOutgoing
+                          ? myAcceptedOutgoing.opponentName
+                          : myAcceptedIncoming?.challengerName}
+                      </strong>
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Pending Outgoing */}
+              {myPendingOutgoing && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="text-blue-800">
+                      Twoje wysłane wyzwanie
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex justify-between items-center">
+                    <p>
+                      Oczekuje na odpowiedź od:{" "}
+                      <strong>{myPendingOutgoing.opponentName}</strong>
+                    </p>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() =>
+                        handleCancelChallenge(myPendingOutgoing.id)
+                      }
+                      disabled={challengeActionLoading}
+                    >
+                      Anuluj
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Rejected Outgoing */}
+              {myOutgoingChallenges
+                .filter((c) => c.status === "REJECTED")
+                .map((c) => (
+                  <Card key={c.id} className="bg-red-50 border-red-200">
+                    <CardHeader>
+                      <CardTitle className="text-red-800">
+                        Odrzucone wyzwanie
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex justify-between items-center">
+                      <p>
+                        Twoje wyzwanie do <strong>{c.opponentName}</strong>{" "}
+                        zostało odrzucone.
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCancelChallenge(c.id)}
+                        disabled={challengeActionLoading}
+                      >
+                        Ukryj
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+
+              {/* Incoming Challenges */}
+              {myIncomingChallenges.length > 0 &&
+                !myAcceptedIncoming &&
+                !myAcceptedOutgoing && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Otrzymane wyzwania</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableBody>
+                          {myIncomingChallenges.map((c) => (
+                            <TableRow key={c.id}>
+                              <TableCell>
+                                <strong>{c.challengerName}</strong> wyzywa Cię
+                                na pojedynek!
+                              </TableCell>
+                              <TableCell className="text-right space-x-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleAcceptChallenge(c.id)}
+                                  disabled={challengeActionLoading}
+                                >
+                                  Akceptuj
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleRejectChallenge(c.id)}
+                                  disabled={challengeActionLoading}
+                                >
+                                  Odrzuć
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )}
+            </div>
+          )}
+
           {/* Tournament Rounds - shown when ACTIVE, IN_PROGRESS or COMPLETED */}
           {(data.status === "ACTIVE" ||
             data.status === "IN_PROGRESS" ||
@@ -673,6 +943,20 @@ export default function TournamentDetailsPage() {
                         participant.isPaid,
                         typeof participant.isPaid,
                       );
+
+                      const targetHasAccepted = challenges.some(
+                        (c) =>
+                          (c.challengerId === participant.userId ||
+                            c.opponentId === participant.userId) &&
+                          c.status === "ACCEPTED",
+                      );
+                      const targetIsMe = auth.userId === participant.userId;
+                      const showChallengeButton =
+                        isParticipant &&
+                        canChallenge &&
+                        !targetIsMe &&
+                        !targetHasAccepted;
+
                       return (
                         <TableRow key={participant.userId}>
                           <TableCell>
@@ -724,6 +1008,30 @@ export default function TournamentDetailsPage() {
                                           status={participant.armyListStatus}
                                         />
                                       </button>
+                                      {isOwner && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center font-bold ml-1"
+                                          onClick={() => {
+                                            setSelectedParticipantForPoints({
+                                              userId: participant.userId,
+                                              name: participant.name,
+                                              points:
+                                                participant.additionalPoints ||
+                                                0,
+                                            });
+                                            setPointsModalOpen(true);
+                                          }}
+                                          title="Zarządzaj punktami dodatkowymi"
+                                        >
+                                          {participant.additionalPoints
+                                            ? participant.additionalPoints > 0
+                                              ? `+${participant.additionalPoints}`
+                                              : participant.additionalPoints
+                                            : "+/-"}
+                                        </Button>
+                                      )}
                                     </>
                                   ) : (
                                     <span className="text-muted-foreground text-sm">
@@ -745,6 +1053,20 @@ export default function TournamentDetailsPage() {
                                     </Button>
                                   </div>
                                 )}
+                              {showChallengeButton && (
+                                <div className="flex-shrink-0 ml-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleCreateChallenge(participant.userId)
+                                    }
+                                    disabled={challengeActionLoading}
+                                  >
+                                    Wyzwij
+                                  </Button>
+                                </div>
+                              )}
                               {isOwner && (
                                 <div className="flex-shrink-0">
                                   <Button
@@ -1115,6 +1437,22 @@ export default function TournamentDetailsPage() {
           isOpen={reviewModalOpen}
           onClose={() => setReviewModalOpen(false)}
           onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
+
+      {selectedParticipantForPoints && (
+        <AdditionalPointsModal
+          tournamentId={parseInt(id)}
+          userId={selectedParticipantForPoints.userId}
+          userName={selectedParticipantForPoints.name}
+          initialPoints={selectedParticipantForPoints.points}
+          isOpen={pointsModalOpen}
+          onClose={() => setPointsModalOpen(false)}
+          onPointsUpdated={async () => {
+            // Refresh participants
+            const confirmed = await getConfirmedParticipants(parseInt(id));
+            setConfirmedParticipants(confirmed);
+          }}
         />
       )}
     </MainLayout>

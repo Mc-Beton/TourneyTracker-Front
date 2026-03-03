@@ -15,6 +15,17 @@ export function searchUsers(query: string, token: string, limit: number = 10) {
   );
 }
 
+export function searchCities(query: string, token: string, limit: number = 10) {
+  return http<string[]>(
+    `/api/users/cities?q=${encodeURIComponent(query)}&limit=${limit}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
 export async function getProfile(token: string) {
   return http<UserProfile>("/api/users/profile", {
     headers: {
