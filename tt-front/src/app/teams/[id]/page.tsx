@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Team, TeamMember, TeamMemberStatus } from "@/lib/types/team";
 import { getTeam, getTeamMembers, joinTeam, leaveTeam, acceptMember, kickMember } from "@/lib/api/teams";
+import MainLayout from "@/components/MainLayout";
+import { useAuth } from "@/lib/auth/useAuth";
 
 export default function TeamDetailsPage() {
   const router = useRouter(); 
+  const auth = useAuth();
   const params = useParams();
   const id = Number(params.id);
 
@@ -74,11 +77,21 @@ export default function TeamDetailsPage() {
     }
   };
 
-  if (loading) return <div className="p-4">Loading team...</div>;
-  if (!team) return <div className="p-4 text-red-500">{error || "Team not found"}</div>;
+  if (loading) return (
+    <MainLayout>
+      <div className="p-4">Loading team...</div>
+    </MainLayout>
+  );
+
+  if (!team) return (
+    <MainLayout>
+      <div className="p-4 text-red-500">{error || "Team not found"}</div>
+    </MainLayout>
+  );
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
+    <MainLayout>
+      <div className="container mx-auto p-4 max-w-4xl">
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <div className="flex justify-between items-start">
           <div>
@@ -89,7 +102,7 @@ export default function TeamDetailsPage() {
             <p className="text-gray-800">{team.description}</p>
           </div>
           <div>
-            {!team.isMember && !team.isOwner && (
+            {!team.isMember && !team.isOwner && !members.some(m => m.userId === auth.userId) && (
               <button 
                 onClick={handleJoin}
                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
@@ -202,5 +215,6 @@ export default function TeamDetailsPage() {
         </div>
       </div>
     </div>
+    </MainLayout>
   );
 }
