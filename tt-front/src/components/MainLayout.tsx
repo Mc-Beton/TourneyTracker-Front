@@ -89,7 +89,7 @@ export default function MainLayout({
                     href="/teams/my"
                     className="hover:underline whitespace-nowrap text-primary-foreground"
                   >
-                    Moje drużyny
+                    Team
                   </Link>
                 </>
               )}
@@ -205,7 +205,7 @@ export default function MainLayout({
                     className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Moje drużyny
+                    Team
                   </Link>
                   <hr className="border-white/20 my-2" />
                   <Link
