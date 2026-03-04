@@ -14,6 +14,13 @@ export interface Team {
   isMember: boolean;
 }
 
+export interface UpdateTeamRequest {
+  name?: string;
+  abbreviation?: string;
+  city?: string;
+  description?: string;
+}
+
 export interface CreateTeamRequest {
   name: string;
   abbreviation: string;

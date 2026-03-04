@@ -1,5 +1,10 @@
 import { http } from "./http";
-import { CreateTeamRequest, Team, TeamMember } from "../types/team";
+import {
+  CreateTeamRequest,
+  UpdateTeamRequest,
+  Team,
+  TeamMember,
+} from "../types/team";
 
 export const getMyTeams = async (): Promise<Team[]> => {
   return http<Team[]>("/api/teams/my");
@@ -17,6 +22,25 @@ export const createTeam = async (data: CreateTeamRequest): Promise<Team> => {
   return http<Team>("/api/teams", {
     method: "POST",
     body: JSON.stringify(data),
+  });
+};
+
+export const updateTeam = async (
+  id: number,
+  data: UpdateTeamRequest,
+): Promise<Team> => {
+  return http<Team>(`/api/teams/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const transferOwnership = async (
+  teamId: number,
+  memberId: number,
+): Promise<void> => {
+  return http<void>(`/api/teams/${teamId}/owner/${memberId}`, {
+    method: "PUT",
   });
 };
 
