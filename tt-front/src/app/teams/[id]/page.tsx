@@ -17,6 +17,7 @@ import {
   kickMember,
   updateTeam,
   transferOwnership,
+  deleteTeam,
 } from "@/lib/api/teams";
 import MainLayout from "@/components/MainLayout";
 import { useAuth } from "@/lib/auth/useAuth";
@@ -120,6 +121,19 @@ export default function TeamDetailsPage() {
         loadData();
       } catch (err: any) {
         alert("Failed to remove member.");
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!team) return;
+    if (confirm("Are you sure you want to PERMANENTLY delete this team? All members will be removed from the team and become free agents. This action cannot be undone.")) {
+      try {
+        await deleteTeam(team.id);
+        router.push("/teams?view=my-teams");
+      } catch (err: any) {
+        console.error(err);
+        alert(err.message || "Failed to delete team.");
       }
     }
   };
@@ -279,6 +293,12 @@ export default function TeamDetailsPage() {
                       className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
                     >
                       Edit Details
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded w-full"
+                    >
+                      Delete Team
                     </button>
                   </>
                 )}

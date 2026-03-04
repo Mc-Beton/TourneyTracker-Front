@@ -56,6 +56,12 @@ export const leaveTeam = async (id: number): Promise<void> => {
   });
 };
 
+export const deleteTeam = async (id: number): Promise<void> => {
+  return http<void>(`/api/teams/${id}`, {
+    method: "DELETE",
+  });
+};
+
 export const getTeamMembers = async (id: number): Promise<TeamMember[]> => {
   return http<TeamMember[]>(`/api/teams/${id}/members`);
 };
