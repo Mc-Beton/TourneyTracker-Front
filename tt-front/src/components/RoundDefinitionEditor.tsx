@@ -61,6 +61,8 @@ export function RoundDefinitionEditor({
       currentDefinition.playerLevelPairingStrategy || "NONE",
     tableAssignmentStrategy:
       currentDefinition.tableAssignmentStrategy || "BEST_FIRST",
+    avoidSameTeamPairing: currentDefinition.avoidSameTeamPairing || false,
+    avoidSameCityPairing: currentDefinition.avoidSameCityPairing || false,
   });
 
   useEffect(() => {
@@ -447,6 +449,51 @@ export function RoundDefinitionEditor({
                       className="cursor-pointer font-normal"
                     >
                       Dynamiczny (dostosowany)
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Avoid Same Team/City - Dostępne w CUSTOM (dla wszystkich rund) */}
+            {form.pairingAlgorithm === "CUSTOM" && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">
+                  Ograniczenia parowania (opcjonalne)
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="avoidSameTeam"
+                      checked={form.avoidSameTeamPairing || false}
+                      onChange={(e) =>
+                        update("avoidSameTeamPairing", e.target.checked)
+                      }
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label
+                      htmlFor="avoidSameTeam"
+                      className="cursor-pointer font-normal"
+                    >
+                      Unikaj parowania graczy z tej samej drużyny
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="avoidSameCity"
+                      checked={form.avoidSameCityPairing || false}
+                      onChange={(e) =>
+                        update("avoidSameCityPairing", e.target.checked)
+                      }
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label
+                      htmlFor="avoidSameCity"
+                      className="cursor-pointer font-normal"
+                    >
+                      Unikaj parowania graczy z tego samego miasta
                     </Label>
                   </div>
                 </div>

@@ -15,6 +15,8 @@ export type TournamentRoundDefinitionDTO = {
   pairingAlgorithm: string;
   playerLevelPairingStrategy: string | null;
   tableAssignmentStrategy: string | null;
+  avoidSameTeamPairing: boolean;
+  avoidSameCityPairing: boolean;
 };
 
 export type UpdateRoundDefinitionDTO = {
@@ -30,4 +32,6 @@ export type UpdateRoundDefinitionDTO = {
   pairingAlgorithm?: string;
   playerLevelPairingStrategy?: string;
   tableAssignmentStrategy?: string;
+  avoidSameTeamPairing?: boolean;
+  avoidSameCityPairing?: boolean;
 };

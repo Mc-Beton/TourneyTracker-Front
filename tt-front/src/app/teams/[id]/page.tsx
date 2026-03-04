@@ -127,7 +127,11 @@ export default function TeamDetailsPage() {
 
   const handleDelete = async () => {
     if (!team) return;
-    if (confirm("Are you sure you want to PERMANENTLY delete this team? All members will be removed from the team and become free agents. This action cannot be undone.")) {
+    if (
+      confirm(
+        "Are you sure you want to PERMANENTLY delete this team? All members will be removed from the team and become free agents. This action cannot be undone.",
+      )
+    ) {
       try {
         await deleteTeam(team.id);
         router.push("/teams?view=my-teams");
@@ -159,9 +163,11 @@ export default function TeamDetailsPage() {
   const pendingMembers = members.filter(
     (m) => m.status === TeamMemberStatus.PENDING,
   );
-  
+
   // Check if current user has a pending request
-  const myPendingRequest = members.find(m => m.userId === auth.userId && m.status === TeamMemberStatus.PENDING);
+  const myPendingRequest = members.find(
+    (m) => m.userId === auth.userId && m.status === TeamMemberStatus.PENDING,
+  );
 
   return (
     <MainLayout>
@@ -252,28 +258,26 @@ export default function TeamDetailsPage() {
                 <p className="text-gray-800">{team.description}</p>
               </div>
               <div className="flex flex-col gap-2 items-end">
-                {!team.isMember &&
-                  !team.isOwner &&
-                  !myPendingRequest && (
-                    <button
-                      onClick={handleJoin}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                      Join Team
-                    </button>
-                  )}
+                {!team.isMember && !team.isOwner && !myPendingRequest && (
+                  <button
+                    onClick={handleJoin}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                  >
+                    Join Team
+                  </button>
+                )}
                 {myPendingRequest && (
-                    <div className="flex flex-col items-end gap-2">
-                        <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded font-bold border border-orange-300">
-                            Request Pending
-                        </span>
-                        <button 
-                            onClick={handleLeave} // Cancelling is same as leaving (deleting member entry)
-                            className="text-red-600 hover:underline text-sm"
-                        >
-                            Cancel Request
-                        </button>
-                    </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded font-bold border border-orange-300">
+                      Request Pending
+                    </span>
+                    <button
+                      onClick={handleLeave} // Cancelling is same as leaving (deleting member entry)
+                      className="text-red-600 hover:underline text-sm"
+                    >
+                      Cancel Request
+                    </button>
+                  </div>
                 )}
                 {team.isMember && !team.isOwner && (
                   <button
