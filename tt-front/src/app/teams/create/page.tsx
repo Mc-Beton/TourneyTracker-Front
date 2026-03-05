@@ -27,7 +27,11 @@ export default function CreateTeamPage() {
       .catch((err) => console.error(err));
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -53,10 +57,16 @@ export default function CreateTeamPage() {
     <MainLayout>
       <div className="container mx-auto p-4 max-w-lg">
         <h1 className="text-2xl font-bold mb-4">Create New Team</h1>
-        {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
+        {error && (
+          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Team Name</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Team Name
+            </label>
             <input
               type="text"
               name="name"
@@ -67,7 +77,9 @@ export default function CreateTeamPage() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Abbreviation</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Abbreviation
+            </label>
             <input
               type="text"
               name="abbreviation"
@@ -79,7 +91,9 @@ export default function CreateTeamPage() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">City</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              City
+            </label>
             <input
               type="text"
               name="city"
@@ -90,11 +104,18 @@ export default function CreateTeamPage() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Game System</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Game System
+            </label>
             <select
               name="gameSystemId"
               value={formData.gameSystemId}
-              onChange={(e) => setFormData({ ...formData, gameSystemId: Number(e.target.value) })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  gameSystemId: Number(e.target.value),
+                })
+              }
               className="w-full border rounded px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500"
               required
             >
@@ -107,7 +128,9 @@ export default function CreateTeamPage() {
             </select>
           </div>
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Description</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Description
+            </label>
             <textarea
               name="description"
               value={formData.description}
