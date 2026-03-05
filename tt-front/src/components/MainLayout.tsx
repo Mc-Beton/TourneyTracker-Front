@@ -100,7 +100,7 @@ export default function MainLayout({
                     href="/teams/my"
                     className="hover:underline whitespace-nowrap text-primary-foreground"
                   >
-                    Team
+                    Drużyny
                   </Link>
                 </>
               )}

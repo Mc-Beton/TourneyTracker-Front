@@ -55,10 +55,10 @@ export default function CreateLeaguePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
         <h2 className="text-xl font-semibold">
-          Please log in to create a league
+          Zaloguj się, aby utworzyć ligę
         </h2>
         <Button asChild>
-          <Link href="/login">Login</Link>
+          <Link href="/login">Zaloguj</Link>
         </Button>
       </div>
     );
@@ -101,7 +101,7 @@ export default function CreateLeaguePage() {
 
     try {
       if (!formData.gameSystemId) {
-        throw new Error("Please select a game system");
+        throw new Error("Wybierz system gry"); // Translated error
       }
 
       // Ensure dates are valid strings if needed, api expects ISO local usually or simplified YYYY-MM-DD
@@ -111,7 +111,7 @@ export default function CreateLeaguePage() {
       router.push(`/leagues/${newLeague.id}`);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to create league");
+      setError(err.message || "Nie udało się utworzyć ligi");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,15 +129,15 @@ export default function CreateLeaguePage() {
     <div className="mx-auto max-w-2xl py-8">
       <Button variant="ghost" className="mb-4" asChild>
         <Link href="/leagues">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Leagues
+          <ArrowLeft className="mr-2 h-4 w-4" /> Powrót do Lig
         </Link>
       </Button>
 
       <Card>
         <CardHeader>
-          <CardTitle>Create New League</CardTitle>
+          <CardTitle>Utwórz Nową Ligę</CardTitle>
           <CardDescription>
-            Start a new season for your community
+            Rozpocznij nowy sezon dla swojej społeczności
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -149,11 +149,11 @@ export default function CreateLeaguePage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">League Name</Label>
+              <Label htmlFor="name">Nazwa Ligi</Label>
               <Input
                 id="name"
                 name="name"
-                placeholder="e.g. Summer Championship 2024"
+                placeholder="np. Mistrzostwa Lata 2024"
                 required
                 value={formData.name}
                 onChange={handleChange}
@@ -161,7 +161,7 @@ export default function CreateLeaguePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gameSystemId">Game System</Label>
+              <Label htmlFor="gameSystemId">System Gry</Label>
               <select
                 id="gameSystemId"
                 name="gameSystemId"
@@ -170,7 +170,7 @@ export default function CreateLeaguePage() {
                 value={formData.gameSystemId}
                 onChange={handleChange}
               >
-                <option value={0}>Select a system...</option>
+                <option value={0}>Wybierz system...</option>
                 {gameSystems.map((sys) => (
                   <option key={sys.id} value={sys.id}>
                     {sys.name}
@@ -181,7 +181,7 @@ export default function CreateLeaguePage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="startDate">Data Rozpoczęcia</Label>
                 <Input
                   id="startDate"
                   name="startDate"
@@ -192,7 +192,7 @@ export default function CreateLeaguePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="endDate">Data Zakończenia</Label>
                 <Input
                   id="endDate"
                   name="endDate"
@@ -205,11 +205,11 @@ export default function CreateLeaguePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Opis</Label>
               <Textarea
                 id="description"
                 name="description"
-                placeholder="Rules, schedule, prizes..."
+                placeholder="Zasady, harmonogram, nagrody..."
                 rows={4}
                 value={formData.description}
                 onChange={handleChange}
@@ -217,10 +217,10 @@ export default function CreateLeaguePage() {
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="font-medium">Scoring Configuration</h3>
+              <h3 className="font-medium">Konfiguracja Punktacji</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="pointsWin">Win Points</Label>
+                  <Label htmlFor="pointsWin">Punkty za Wygraną</Label>
                   <Input
                     type="number"
                     id="pointsWin"
@@ -230,7 +230,7 @@ export default function CreateLeaguePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pointsDraw">Draw Points</Label>
+                  <Label htmlFor="pointsDraw">Punkty za Remis</Label>
                   <Input
                     type="number"
                     id="pointsDraw"
@@ -240,7 +240,7 @@ export default function CreateLeaguePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pointsLoss">Loss Points</Label>
+                  <Label htmlFor="pointsLoss">Punkty za Przegraną</Label>
                   <Input
                     type="number"
                     id="pointsLoss"
@@ -251,7 +251,7 @@ export default function CreateLeaguePage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pointsParticipation">
-                    Participation Points
+                    Punkty za Uczestnictwo
                   </Label>
                   <Input
                     type="number"
@@ -265,7 +265,7 @@ export default function CreateLeaguePage() {
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="font-medium">Settings</h3>
+              <h3 className="font-medium">Ustawienia</h3>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -277,7 +277,7 @@ export default function CreateLeaguePage() {
                   className="h-4 w-4 rounded border-gray-300"
                 />
                 <Label htmlFor="autoAcceptGames">
-                  Auto-approve match submissions
+                  Automatycznie zatwierdzaj wyniki meczów
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -294,7 +294,7 @@ export default function CreateLeaguePage() {
                   className="h-4 w-4 rounded border-gray-300"
                 />
                 <Label htmlFor="autoAcceptTournaments">
-                  Auto-approve tournament results
+                  Automatycznie zatwierdzaj wyniki turniejów
                 </Label>
               </div>
             </div>
@@ -306,13 +306,13 @@ export default function CreateLeaguePage() {
               onClick={() => router.back()}
               disabled={isSubmitting}
             >
-              Cancel
+              Anuluj
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Create League
+              Utwórz Ligę
             </Button>
           </CardFooter>
         </form>

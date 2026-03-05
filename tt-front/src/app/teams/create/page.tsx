@@ -41,7 +41,7 @@ export default function CreateTeamPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.gameSystemId === 0) {
-      setError("Please select a game system.");
+      setError("Wybierz system gry.");
       return;
     }
 
@@ -49,14 +49,14 @@ export default function CreateTeamPage() {
       await createTeam(formData);
       router.push("/teams/my"); // Redirect to My Teams
     } catch (err: any) {
-      setError(err.message || "Failed to create team.");
+      setError(err.message || "Nie udało się utworzyć drużyny.");
     }
   };
 
   return (
     <MainLayout>
       <div className="container mx-auto p-4 max-w-lg">
-        <h1 className="text-2xl font-bold mb-4">Create New Team</h1>
+        <h1 className="text-2xl font-bold mb-4">Utwórz Nową Drużynę</h1>
         {error && (
           <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">
             {error}
@@ -65,7 +65,7 @@ export default function CreateTeamPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              Team Name
+              Nazwa Drużyny
             </label>
             <input
               type="text"
@@ -78,7 +78,7 @@ export default function CreateTeamPage() {
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              Abbreviation
+              Skrót
             </label>
             <input
               type="text"
@@ -92,7 +92,7 @@ export default function CreateTeamPage() {
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              City
+              Miasto
             </label>
             <input
               type="text"
@@ -105,7 +105,7 @@ export default function CreateTeamPage() {
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              Game System
+              System Gry
             </label>
             <select
               name="gameSystemId"
@@ -119,7 +119,7 @@ export default function CreateTeamPage() {
               className="w-full border rounded px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500"
               required
             >
-              <option value={0}>Select a system</option>
+              <option value={0}>Wybierz system</option>
               {systems.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -129,7 +129,7 @@ export default function CreateTeamPage() {
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              Description
+              Opis
             </label>
             <textarea
               name="description"
@@ -143,7 +143,7 @@ export default function CreateTeamPage() {
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           >
-            Create Team
+            Utwórz Drużynę
           </button>
         </form>
       </div>

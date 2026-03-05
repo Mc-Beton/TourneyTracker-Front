@@ -24,10 +24,10 @@ const scoringSystemOptions: { value: ScoringSystem; label: string }[] = [
 ];
 
 const scoreTypeOptions = [
-  { value: "MAIN_SCORE", label: "Main Score" },
-  { value: "SECONDARY_SCORE", label: "Secondary Score" },
-  { value: "THIRD_SCORE", label: "Third Score" },
-  { value: "ADDITIONAL_SCORE", label: "Additional Score" },
+  { value: "MAIN_SCORE", label: "Wynik Główny" },
+  { value: "SECONDARY_SCORE", label: "Wynik Drugorzędny" },
+  { value: "THIRD_SCORE", label: "Wynik Trzeciorzędny" },
+  { value: "ADDITIONAL_SCORE", label: "Wynik Dodatkowy" },
 ];
 
 const tournamentPointsSystemOptions: {
@@ -463,7 +463,7 @@ export default function CreateTournamentPage() {
             {/* Tymczasowo ukryte - przyda się w przyszłych rozwojach */}
             <fieldset className="border rounded-lg p-4 space-y-3 hidden">
               <legend className="font-medium px-2">
-                Punktacja - Score Points (małe punkty)
+                Punktacja - Małe Punkty (Battle Points)
               </legend>
 
               <div>
@@ -487,7 +487,7 @@ export default function CreateTournamentPage() {
 
               <div>
                 <div className="text-sm font-medium mb-2">
-                  Włączone typy score:
+                  Włączone typy punktacji:
                 </div>
                 <div className="space-y-2">
                   {scoreTypeOptions.map((o) => (
@@ -518,13 +518,15 @@ export default function CreateTournamentPage() {
                   }
                   className="rounded"
                 />
-                <span className="text-sm">Wymagaj wszystkich typów score</span>
+                <span className="text-sm">
+                  Wymagaj wszystkich typów punktacji
+                </span>
               </label>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Min score
+                    Minimalny wynik
                   </label>
                   <Input
                     type="number"
@@ -538,7 +540,7 @@ export default function CreateTournamentPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Max score
+                    Maksymalny wynik
                   </label>
                   <Input
                     type="number"
@@ -554,7 +556,7 @@ export default function CreateTournamentPage() {
 
             <fieldset className="border rounded-lg p-4 space-y-3">
               <legend className="font-medium px-2">
-                Punktacja - Tournament Points (duże punkty)
+                Punktacja - Duże Punkty (Tournament Points)
               </legend>
 
               <div>

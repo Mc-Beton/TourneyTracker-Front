@@ -5,6 +5,10 @@ import {
   LeagueMatchDTO,
   LeagueMemberDTO,
   LeagueTournamentDTO,
+  LeagueStatus,
+  CreateChallengeDTO,
+  LeagueChallengeDTO,
+  ChallengeStatus,
 } from "../types/league";
 
 /**
@@ -71,7 +75,9 @@ export async function getLeagueMembers(id: number): Promise<LeagueMemberDTO[]> {
 /**
  * Get Pending Members (Owner Only).
  */
-export async function getPendingMembers(id: number): Promise<LeagueMemberDTO[]> {
+export async function getPendingMembers(
+  id: number,
+): Promise<LeagueMemberDTO[]> {
   return http<LeagueMemberDTO[]>(`/api/leagues/${id}/members/pending`);
 }
 
@@ -150,4 +156,84 @@ export async function approveMember(
   return http<void>(`/api/leagues/${leagueId}/members/${userId}/approve`, {
     method: "POST",
   });
+}
+
+/**
+ * Updates a League.
+ */
+export async function updateLeague(
+  id: number,
+  data: CreateLeagueDTO,
+): Promise<LeagueDTO> {
+  return http<LeagueDTO>(`/api/leagues/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Deletes a League.
+ */
+export async function deleteLeague(id: number): Promise<void> {
+  return http<void>(`/api/leagues/${id}`, {
+    method: "DELETE",
+  });
+}
+
+/**
+ * Sets the status of a League.
+ */
+export async function setLeagueStatus(
+  id: number,
+  status: LeagueStatus,
+): Promise<void> {
+  return http<void>(`/api/leagues/${id}/status?status=${status}`, {
+    method: "PUT",
+  });
+}
+
+/**
+ * Leaves a League (for members).
+ */
+export async function leaveLeague(id: number): Promise<void> {
+  return http<void>(`/api/leagues/${id}/leave`, {
+    method: "POST",
+  });
+}
+
+/**
+ * Creates a challenge in a League.
+ */
+export async function createChallenge(
+  data: CreateChallengeDTO,
+): Promise<LeagueChallengeDTO> {
+  return http<LeagueChallengeDTO>(`/api/leagues/challenges`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Responds to a challenge.
+ * accepted: true to accept, false to reject.
+ */
+export async function respondToChallenge(
+  challengeId: number,
+  accepted: boolean,
+): Promise<void> {
+  return http<void>(
+    `/api/leagues/challenges/${challengeId}/respond?accepted=${accepted}`,
+    {
+      method: "POST",
+    },
+  );
+}
+
+/**
+ * Gets challenges for the current user in a league.
+ */
+export async function getMyChallenges(
+  leagueId: number,
+): Promise<LeagueChallengeDTO[]> {
+  return http<LeagueChallengeDTO[]>(`/api/leagues/${leagueId}/my-challenges`);
 }

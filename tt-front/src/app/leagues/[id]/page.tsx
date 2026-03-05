@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import {
   getLeague,
@@ -9,8 +9,19 @@ import {
   joinLeague,
   getPendingMembers,
   approveMember,
+  setLeagueStatus,
+  deleteLeague,
+  leaveLeague,
+  createChallenge,
+  respondToChallenge,
+  getMyChallenges,
 } from "@/lib/api/leagues";
-import { LeagueDTO, LeagueMemberDTO } from "@/lib/types/league";
+import {
+  LeagueDTO,
+  LeagueMemberDTO,
+  LeagueChallengeDTO,
+  LeagueStatus,
+} from "@/lib/types/league";
 import {
   Card,
   CardContent,
@@ -19,11 +30,58 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trophy, Users, AlertCircle, Check, X } from "lucide-react";
+import {
+  Loader2,
+  Trophy,
+  Users,
+  AlertCircle,
+  Check,
+  X,
+  Swords,
+  Settings,
+  LogOut,
+  Calendar,
+  Sword,
+  ShieldAlert,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+function LeagueStatusBadge({ status }: { status: LeagueStatus }) {
+  const styles: Record<string, string> = {
+    DRAFT: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    ACTIVE: "bg-green-100 text-green-800 border-green-200",
+    COMPLETED: "bg-blue-100 text-blue-800 border-blue-200",
+    ARCHIVED: "bg-gray-100 text-gray-800 border-gray-200",
+  };
+
+  const labels: Record<string, string> = {
+    DRAFT: "Draft",
+    ACTIVE: "Aktywna",
+    COMPLETED: "Zakończona",
+    ARCHIVED: "Archiwum",
+  };
+
+  return (
+    <span
+      className={`px-2 py-1 rounded text-xs font-semibold border ${styles[status] || ""}`}
+    >
+      {labels[status] || status}
+    </span>
+  );
+}
 
 export default function LeagueDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const id = parseInt(
     Array.isArray(params.id) ? params.id[0] : params.id || "0",
   );
@@ -32,23 +90,30 @@ export default function LeagueDetailsPage() {
   const [league, setLeague] = useState<LeagueDTO | null>(null);
   const [members, setMembers] = useState<LeagueMemberDTO[]>([]);
   const [pendingMembers, setPendingMembers] = useState<LeagueMemberDTO[]>([]);
+  const [myChallenges, setMyChallenges] = useState<LeagueChallengeDTO[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
-  const [approving, setApproving] = useState<number | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (!id || authLoading) return;
+  // New State for Challenge Dialog
+  const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
+  const [selectedOpponent, setSelectedOpponent] = useState<number | null>(null);
+  const [challengeDate, setChallengeDate] = useState("");
+  const [challengeMessage, setChallengeMessage] = useState("");
 
-    const fetchData = async () => {
-      try {
-        const leagueData = await getLeague(id);
-        setLeague(leagueData);
+  const fetchData = async () => {
+    try {
+      // Don't set loading true here to avoid flickering on re-fetch
+      const leagueData = await getLeague(id);
+      setLeague(leagueData);
 
-        const membersData = await getLeagueMembers(id);
-        setMembers(membersData);
+      const membersData = await getLeagueMembers(id);
+      setMembers(membersData);
 
-        if (isAuthenticated && userId && leagueData.owner?.id === userId) {
+      if (isAuthenticated && userId) {
+        if (leagueData.owner?.id === userId) {
           try {
             const pendingData = await getPendingMembers(id);
             setPendingMembers(pendingData);
@@ -56,14 +121,28 @@ export default function LeagueDetailsPage() {
             console.error("Failed to load pending members", e);
           }
         }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load league details");
-      } finally {
-        setLoading(false);
-      }
-    };
 
+        // Load challenges if member
+        const isMember = membersData.some((m) => m.user.id === userId);
+        if (isMember) {
+          try {
+            const challengesData = await getMyChallenges(id);
+            setMyChallenges(challengesData);
+          } catch (e) {
+            console.error("Failed to load challenges", e);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load league details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!id || authLoading) return;
     fetchData();
   }, [id, authLoading, isAuthenticated, userId]);
 
@@ -75,9 +154,7 @@ export default function LeagueDetailsPage() {
     try {
       setJoining(true);
       await joinLeague(id);
-      // Refresh members
-      const updatedMembers = await getLeagueMembers(id);
-      setMembers(updatedMembers);
+      fetchData();
     } catch (err) {
       console.error("Failed to join league", err);
     } finally {
@@ -85,21 +162,95 @@ export default function LeagueDetailsPage() {
     }
   };
 
-  const handleApprove = async (memberUserId: number) => {
+  const handleLeave = async () => {
+    if (!confirm("Czy na pewno chcesz opuścić ligę?")) return;
     try {
-      setApproving(memberUserId);
+      setActionLoading(true);
+      await leaveLeague(id);
+      fetchData(); // Will likely redirect or update UI
+    } catch (err) {
+      console.error("Failed to leave league", err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (status: LeagueStatus) => {
+    if (!confirm(`Czy na pewno zmienić status na ${status}?`)) return;
+    try {
+      setActionLoading(true);
+      await setLeagueStatus(id, status);
+      fetchData();
+    } catch (err) {
+      console.error("Failed to update status", err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Czy na pewno usunąć ligę? Ta operacja jest nieodwracalna."))
+      return;
+    try {
+      setActionLoading(true);
+      await deleteLeague(id);
+      router.push("/leagues");
+    } catch (err) {
+      console.error("Failed to delete league", err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleApproveMember = async (memberUserId: number) => {
+    try {
+      setActionLoading(true);
       await approveMember(id, memberUserId);
-      // Refresh pending and members
-      const [updatedMembers, updatedPending] = await Promise.all([
-        getLeagueMembers(id),
-        getPendingMembers(id),
-      ]);
-      setMembers(updatedMembers);
-      setPendingMembers(updatedPending);
+      fetchData();
     } catch (err) {
       console.error("Failed to approve member", err);
     } finally {
-      setApproving(null);
+      setActionLoading(false);
+    }
+  };
+
+  const handleCreateChallenge = async () => {
+    if (!selectedOpponent || !challengeDate) {
+      alert("Wybierz przeciwnika i datę");
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await createChallenge({
+        leagueId: id,
+        opponentId: selectedOpponent,
+        scheduledTime: new Date(challengeDate).toISOString(),
+        message: challengeMessage,
+      });
+      setChallengeDialogOpen(false);
+      fetchData();
+      alert("Wyzwanie wysłane!");
+    } catch (err) {
+      console.error("Failed to create challenge", err);
+      alert("Nie udało się utworzyć wyzwania");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRespondChallenge = async (
+    challengeId: number,
+    accept: boolean,
+  ) => {
+    try {
+      setActionLoading(true);
+      await respondToChallenge(challengeId, accept);
+      fetchData();
+    } catch (err) {
+      console.error("Failed to respond to challenge", err);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -116,22 +267,25 @@ export default function LeagueDetailsPage() {
       <div className="flex flex-col items-center justify-center h-screen space-y-4">
         <AlertCircle className="h-12 w-12 text-destructive" />
         <p className="text-xl font-semibold text-destructive">
-          {error || "League not found"}
+          {error || "Liga nie znaleziona"}
         </p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
+        <Button onClick={() => window.location.reload()}>
+          Spróbuj ponownie
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="py-8 space-y-8 container mx-auto">
+    <div className="py-8 space-y-8 container mx-auto px-4">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{league.name}</h1>
-          <p className="text-muted-foreground mt-1 text-lg">
-            {league.description}
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold tracking-tight">{league.name}</h1>
+            <LeagueStatusBadge status={league.status} />
+          </div>
+          <p className="text-muted-foreground text-lg">{league.description}</p>
           <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded">
               <Trophy className="w-4 h-4" />
@@ -139,9 +293,10 @@ export default function LeagueDetailsPage() {
             </span>
             <span className="flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded">
               <Users className="w-4 h-4" />
-              {league.memberCount} Members
+              {league.memberCount} Uczestników
             </span>
-            <span className="bg-secondary/10 px-2 py-1 rounded">
+            <span className="flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded">
+              <Calendar className="w-4 h-4" />
               {new Date(league.startDate).toLocaleDateString()} -{" "}
               {new Date(league.endDate).toLocaleDateString()}
             </span>
@@ -149,185 +304,401 @@ export default function LeagueDetailsPage() {
         </div>
 
         {isAuthenticated && !isMember && (
-          <Button onClick={handleJoin} disabled={joining}>
-            {joining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Join League
+          <Button
+            onClick={handleJoin}
+            disabled={joining || league.status !== "ACTIVE"}
+          >
+            {joining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {league.status === "DRAFT"
+              ? "Liga w przygotowaniu"
+              : "Dołącz do Ligi"}
           </Button>
         )}
         {isAuthenticated && isMember && !isOwner && (
-             <div className="px-4 py-2 bg-green-50 text-green-700 rounded-md border border-green-200 text-sm font-medium">
-                 Member
-             </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleLeave}
+              disabled={actionLoading}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Opuść ligę
+            </Button>
+          </div>
+        )}
+        {isAuthenticated && isOwner && (
+          <div className="flex gap-2">
+            {league.status === "DRAFT" && (
+              <Button
+                onClick={() => handleStatusChange("ACTIVE")}
+                disabled={actionLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Aktywuj Ligę
+              </Button>
+            )}
+            {league.status === "ACTIVE" && (
+              <Button
+                onClick={() => handleStatusChange("COMPLETED")}
+                variant="secondary"
+                disabled={actionLoading}
+              >
+                Zakończ Ligę
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={handleDelete}
+              disabled={actionLoading}
+              title="Usuń ligę"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+      {league.status === "DRAFT" && !isOwner && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-md flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5" />
+          <p>
+            Ta liga jest statusie <strong>Draft</strong>. Rozgrywki rozpoczną
+            się wkrótce po aktywacji przez organizatora.
+          </p>
+        </div>
+      )}
+
+      <Tabs defaultValue="members" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsTrigger value="members">Tabela</TabsTrigger>
+          <TabsTrigger value="matches">Mecze</TabsTrigger>
+          {isAuthenticated && isMember && (
+            <TabsTrigger value="challenges">Wyzwania</TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="members" className="space-y-4 pt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                  <CardTitle>Leaderboard</CardTitle>
-                  <CardDescription>Current standings for this season</CardDescription>
+                <CardTitle>Uczestnicy</CardTitle>
+                <CardDescription>Ranking i lista graczy</CardDescription>
               </div>
+              {isAuthenticated && isMember && league.status === "ACTIVE" && (
+                <Dialog
+                  open={challengeDialogOpen}
+                  onOpenChange={setChallengeDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Swords className="mr-2 h-4 w-4" />
+                      Wyzwij gracza
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Utwórz wyzwanie</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>Wybierz przeciwnika</Label>
+                        <select
+                          className="w-full p-2 border rounded-md"
+                          value={selectedOpponent || ""}
+                          onChange={(e) =>
+                            setSelectedOpponent(Number(e.target.value))
+                          }
+                        >
+                          <option value="">Wybierz gracza...</option>
+                          {members
+                            .filter((m) => m.user.id !== userId) // Filter out self
+                            .map((m) => (
+                              <option key={m.user.id} value={m.user.id}>
+                                {m.user.name}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Planowana data</Label>
+                        <Input
+                          type="datetime-local"
+                          value={challengeDate}
+                          onChange={(e) => setChallengeDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Wiadomość (opcjonalnie)</Label>
+                        <Input
+                          value={challengeMessage}
+                          onChange={(e) => setChallengeMessage(e.target.value)}
+                          placeholder="Zagramy w sobotę?"
+                        />
+                      </div>
+                      <Button
+                        onClick={handleCreateChallenge}
+                        disabled={actionLoading}
+                        className="w-full"
+                      >
+                        {actionLoading ? (
+                          <Loader2 className="animate-spin mr-2" />
+                        ) : (
+                          <Sword className="mr-2 h-4 w-4" />
+                        )}
+                        Wyślij wyzwanie
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </CardHeader>
             <CardContent>
               {members.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground border rounded-md bg-muted/5">
-                  No members yet. Be the first to join!
+                <div className="text-center py-8 text-muted-foreground border rounded-md bg-muted/5">
+                  Brak członków.
                 </div>
               ) : (
                 <div className="rounded-md border">
-                    <div className="grid grid-cols-12 text-sm font-medium text-muted-foreground bg-muted/50 py-3 px-4 border-b">
-                        <div className="col-span-1">#</div>
-                        <div className="col-span-5">Player</div>
-                        <div className="col-span-2 text-center">Pts</div>
-                        <div className="col-span-2 text-center">W</div>
-                        <div className="col-span-2 text-center">M</div>
-                    </div>
+                  <div className="grid grid-cols-12 text-sm font-medium text-muted-foreground bg-muted/50 py-3 px-4 border-b">
+                    <div className="col-span-1">#</div>
+                    <div className="col-span-4">Gracz</div>
+                    <div className="col-span-2 text-center">Pkt</div>
+                    <div className="col-span-2 text-center">W</div>
+                    <div className="col-span-1 text-center">M</div>
+                    <div className="col-span-2 text-right">Akcje</div>
+                  </div>
                   <div className="divide-y">
                     {members
-                        .sort((a, b) => b.points - a.points)
-                        .map((member, index) => (
+                      .sort((a, b) => b.points - a.points)
+                      .map((member, index) => (
                         <div
-                            key={member.id}
-                            className={`grid grid-cols-12 items-center py-3 px-4 hover:bg-muted/5 transition-colors ${
-                            member.user.id === userId
-                                ? "bg-blue-50/50 hover:bg-blue-50"
-                                : ""
-                            }`}
+                          key={member.id}
+                          className={`grid grid-cols-12 items-center py-3 px-4 hover:bg-muted/5 ${member.user.id === userId ? "bg-blue-50/50" : ""}`}
                         >
-                            <div className="col-span-1 font-mono text-muted-foreground">
+                          <div className="col-span-1 font-medium">
                             {index + 1}
-                            </div>
-                            <div className="col-span-5 font-medium truncate flex items-center gap-2">
-                                {/* Avatar placeholder could go here */}
-                                {member.user.name}
-                                {member.user.id === userId && <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">You</span>}
-                                {league.owner?.id === member.user.id && <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">Owner</span>}
-                            </div>
-                            <div className="col-span-2 text-center font-bold text-primary">
+                          </div>
+                          <div className="col-span-4 font-medium flex items-center gap-2 truncate">
+                            {member.user.name}
+                            {member.user.id === userId && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">
+                                Ty
+                              </span>
+                            )}
+                            {member.user.id === league.owner?.id && (
+                              <span className="text-xs bg-yellow-100 text-yellow-700 px-1 rounded">
+                                Org
+                              </span>
+                            )}
+                          </div>
+                          <div className="col-span-2 text-center font-bold">
                             {member.points}
-                            </div>
-                            <div className="col-span-2 text-center text-muted-foreground">
+                          </div>
+                          <div className="col-span-2 text-center">
                             {member.wins}
-                            </div>
-                            <div className="col-span-2 text-center text-muted-foreground">
+                          </div>
+                          <div className="col-span-1 text-center">
                             {member.matchesPlayed}
-                            </div>
+                          </div>
+                          <div className="col-span-2 text-right">
+                            {isAuthenticated &&
+                              isMember &&
+                              member.user.id !== userId &&
+                              league.status === "ACTIVE" && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  title="Wyzwij na pojedynek"
+                                  onClick={() => {
+                                    setSelectedOpponent(member.user.id);
+                                    setChallengeDialogOpen(true);
+                                  }}
+                                >
+                                  <Swords className="h-4 w-4" />
+                                </Button>
+                              )}
+                          </div>
                         </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Admin / Owner Section */}
-          {isOwner && (
-            <div className="space-y-6">
-                {/* Pending Requests */}
-                <Card className="border-orange-200 shadow-sm">
-                    <CardHeader className="pb-3 bg-orange-50/30">
-                        <CardTitle className="text-orange-900 flex items-center justify-between text-lg">
-                            Pending Requests
-                            {pendingMembers.length > 0 && <span className="bg-orange-200 text-orange-800 text-xs px-2 py-0.5 rounded-full">{pendingMembers.length}</span>}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                        {pendingMembers.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-2">No pending requests</p>
-                        ) : (
-                            <div className="space-y-3">
-                                {pendingMembers.map((member) => (
-                                    <div key={member.id} className="flex items-center justify-between p-2 border rounded bg-white">
-                                        <div className="truncate text-sm font-medium mr-2">{member.user.name}</div>
-                                        <div className="flex gap-1">
-                                            <Button 
-                                                size="sm" 
-                                                className="h-7 w-7 p-0" 
-                                                variant="outline"
-                                                onClick={() => handleApprove(member.user.id)}
-                                                disabled={approving === member.user.id}
-                                            >
-                                                {approving === member.user.id ? <Loader2 className="h-3 w-3 animate-spin"/> : <Check className="h-4 w-4 text-green-600" />}
-                                                <span className="sr-only">Approve</span>
-                                            </Button>
-                                             {/* Reject button could be added here */}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+          {isOwner && pendingMembers.length > 0 && (
+            <Card className="mt-6 border-yellow-200 bg-yellow-50/30">
+              <CardHeader>
+                <CardTitle className="text-yellow-800">
+                  Oczekujący na akceptację
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {pendingMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex justify-between items-center bg-white p-3 rounded shadow-sm border"
+                    >
+                      <span className="font-medium">{member.user.name}</span>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveMember(member.user.id)}
+                        disabled={actionLoading}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Zatwierdź
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="matches" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Historia Meczów</CardTitle>
+              <CardDescription>Ostatnie rozegrane spotkania</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                Funkcja w przygotowaniu (API dostępne)
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="challenges" className="pt-4">
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Otrzymane Wyzwania</CardTitle>
+                <CardDescription>
+                  Inni gracze chcą z Tobą zagrać
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {myChallenges.filter(
+                  (c) => c.challengedId === userId && c.status === "PENDING",
+                ).length === 0 && (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    Brak nowych wyzwań
+                  </div>
+                )}
+                {myChallenges
+                  .filter(
+                    (c) => c.challengedId === userId && c.status === "PENDING",
+                  )
+                  .map((challenge) => (
+                    <div
+                      key={challenge.id}
+                      className="border rounded-lg p-4 bg-white shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-semibold text-lg">
+                            {challenge.challengerName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            wyzywa Cię na pojedynek
+                          </p>
+                        </div>
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                          Oczekuje
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-4">
+                        <p>
+                          Kiedy:{" "}
+                          {new Date(
+                            challenge.scheduledTime || challenge.createdAt,
+                          ).toLocaleString()}
+                        </p>
+                        {challenge.message && (
+                          <p className="italic mt-1">"{challenge.message}"</p>
                         )}
-                    </CardContent>
-                </Card>
-
-                {/* Scoring Rules (Only visible to owner now) */}
-                <Card>
-                    <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Scoring Rules</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 text-sm">
-                    <div className="flex justify-between py-2 border-b border-dashed">
-                        <span>Win</span>
-                        <span className="font-semibold text-green-600">
-                        +{league.pointsWin} pts
-                        </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-dashed">
-                        <span>Draw</span>
-                        <span className="font-semibold text-yellow-600">
-                        +{league.pointsDraw} pts
-                        </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-dashed">
-                        <span>Loss</span>
-                        <span className="font-semibold text-red-600">
-                        +{league.pointsLoss} pts
-                        </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-dashed">
-                        <span>Participation</span>
-                        <span className="font-semibold">
-                        +{league.pointsParticipation} pts
-                        </span>
-                    </div>
-                    <div className="pt-2 text-xs text-muted-foreground bg-muted/20 p-2 rounded">
-                        Points per participant: {league.pointsPerParticipant}
-                    </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-lg">Admin Controls</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        <Button variant="outline" className="w-full justify-start text-muted-foreground" disabled>
-                            Manage Settings (Coming Soon)
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="w-full bg-green-600 hover:bg-green-700"
+                          onClick={() =>
+                            handleRespondChallenge(challenge.id, true)
+                          }
+                        >
+                          <Check className="w-4 h-4 mr-2" /> Przyjmij
                         </Button>
-                    </CardContent>
-                </Card>
-            </div>
-          )}
-          
-          {/* If simple member, maybe show some stats or nothing */}
-          {!isOwner && (
-              <Card className="bg-muted/30 border-dashed">
-                  <CardHeader>
-                      <CardTitle className="text-base text-muted-foreground">League Info</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground">
-                      <p>Contact the league owner <strong>{league.owner?.name}</strong> for questions about rules or scoring.</p>
-                  </CardContent>
-              </Card>
-          )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-red-600 hover:bg-red-50"
+                          onClick={() =>
+                            handleRespondChallenge(challenge.id, false)
+                          }
+                        >
+                          <X className="w-4 h-4 mr-2" /> Odrzuć
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
 
-        </div>
-      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Wysłane Wyzwania</CardTitle>
+                <CardDescription>Twoje propozycje gier</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {myChallenges.filter((c) => c.challengerId === userId)
+                  .length === 0 && (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    Nie wysłałeś żadnych wyzwań
+                  </div>
+                )}
+                {myChallenges
+                  .filter((c) => c.challengerId === userId)
+                  .map((challenge) => (
+                    <div
+                      key={challenge.id}
+                      className="border rounded-lg p-3 bg-gray-50/50"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">
+                          vs {challenge.challengedName}
+                        </span>
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            challenge.status === "ACCEPTED"
+                              ? "bg-green-100 text-green-800"
+                              : challenge.status === "REJECTED"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {challenge.status === "PENDING"
+                            ? "Oczekuje"
+                            : challenge.status === "ACCEPTED"
+                              ? "Przyjęte"
+                              : "Odrzucone"}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Wysłano:{" "}
+                        {new Date(challenge.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

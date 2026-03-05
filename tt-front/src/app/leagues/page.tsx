@@ -28,7 +28,7 @@ export default function LeaguesPage() {
   useEffect(() => {
     const fetchLeagues = async () => {
       if (authLoading) return;
-      
+
       setLoading(true);
       setError(null);
       try {
@@ -45,7 +45,7 @@ export default function LeaguesPage() {
         setLeagues(response.content || []);
       } catch (err) {
         console.error(err);
-        setError("Failed to load leagues");
+        setError("Nie udało się załadować lig");
       } finally {
         setLoading(false);
       }
@@ -68,7 +68,7 @@ export default function LeaguesPage() {
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <p className="text-destructive font-medium">{error}</p>
           <Button variant="outline" onClick={() => window.location.reload()}>
-            Retry
+            Spróbuj ponownie
           </Button>
         </div>
       );
@@ -79,13 +79,13 @@ export default function LeaguesPage() {
         <div className="text-center py-20 border rounded-lg bg-muted/10">
           <h3 className="text-lg font-semibold">
             {activeTab === "my"
-              ? "You haven't joined any leagues yet"
-              : "No leagues available"}
+              ? "Nie dołączyłeś jeszcze do żadnych lig"
+              : "Brak dostępnych lig"}
           </h3>
           <p className="text-muted-foreground mt-2">
             {activeTab === "my"
-              ? "Join a league to see it here!"
-              : "Be the first to create one!"}
+              ? "Dołącz do ligi, aby zobaczyć ją tutaj!"
+              : "Bądź pierwszym, który ją stworzy!"}
           </p>
         </div>
       );
@@ -112,15 +112,15 @@ export default function LeaguesPage() {
     <div className="space-y-8 container mx-auto py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Leagues</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Ligi</h1>
           <p className="text-muted-foreground mt-2">
-            Join existing leagues or create your own to compete.
+            Dołącz do istniejących lig lub stwórz własną, aby rywalizować.
           </p>
         </div>
         {isAuthenticated && (
           <Button asChild>
             <Link href="/leagues/create">
-              <Plus className="mr-2 h-4 w-4" /> Create League
+              <Plus className="mr-2 h-4 w-4" /> Stwórz Ligę
             </Link>
           </Button>
         )}
@@ -136,7 +136,7 @@ export default function LeaguesPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Available Leagues
+            Dostępne Ligi
           </button>
           <button
             onClick={() => setActiveTab("my")}
@@ -146,7 +146,7 @@ export default function LeaguesPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            My Leagues
+            Moje Ligi
           </button>
         </div>
       )}

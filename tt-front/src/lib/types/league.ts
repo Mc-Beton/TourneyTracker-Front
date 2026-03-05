@@ -1,5 +1,7 @@
 export type LeagueMemberStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type LeagueApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type LeagueStatus = "DRAFT" | "ACTIVE" | "COMPLETED" | "ARCHIVED";
+export type ChallengeStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
 
 export interface UserDTO {
   id: number;
@@ -39,6 +41,8 @@ export interface LeagueDTO {
   autoAcceptGames: boolean;
   autoAcceptTournaments: boolean;
 
+  status: LeagueStatus;
+
   // Scoring config
   pointsWin: number;
   pointsDraw: number;
@@ -47,6 +51,26 @@ export interface LeagueDTO {
   pointsPerParticipant: number;
 
   memberCount?: number;
+}
+
+export interface LeagueChallengeDTO {
+  id: number;
+  leagueId: number;
+  challengerId: number;
+  challengerName: string;
+  challengedId: number;
+  challengedName: string;
+  status: ChallengeStatus;
+  scheduledTime: string; // ISO DateTime
+  message?: string;
+  createdAt: string;
+}
+
+export interface CreateChallengeDTO {
+  leagueId: number;
+  opponentId: number;
+  scheduledTime: string;
+  message?: string;
 }
 
 export interface CreateLeagueDTO {

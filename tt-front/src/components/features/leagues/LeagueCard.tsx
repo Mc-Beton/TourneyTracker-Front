@@ -23,14 +23,14 @@ export function LeagueCard({ league }: LeagueCardProps) {
   const start = new Date(league.startDate);
   const end = new Date(league.endDate);
 
-  let statusText = "Active";
+  let statusText = "Aktywna";
   let statusColor = "text-green-600 bg-green-100";
 
   if (now < start) {
-    statusText = "Upcoming";
+    statusText = "Nadchodząca";
     statusColor = "text-blue-600 bg-blue-100";
   } else if (now > end) {
-    statusText = "Finished";
+    statusText = "Zakończona";
     statusColor = "text-gray-600 bg-gray-100";
   }
 
@@ -40,7 +40,7 @@ export function LeagueCard({ league }: LeagueCardProps) {
         <div className="space-y-1">
           <CardTitle>{league.name}</CardTitle>
           <CardDescription className="line-clamp-1">
-            {league.description || "No description"}
+            {league.description || "Brak opisu"}
           </CardDescription>
         </div>
         <div
@@ -53,21 +53,21 @@ export function LeagueCard({ league }: LeagueCardProps) {
         <div className="grid gap-2 text-sm text-muted-foreground mt-2">
           <div className="flex items-center gap-2">
             <ShieldIcon className="w-4 h-4" />
-            <span>System: {league.gameSystem?.name || "Unknown"}</span>
+            <span>System: {league.gameSystem?.name || "Nieznany"}</span>
           </div>
           <div className="flex items-center gap-2">
             <CalendarIcon className="w-4 h-4" />
-            <span>Ends: {end.toLocaleDateString()}</span>
+            <span>Koniec: {end.toLocaleDateString()}</span>
           </div>
           <div className="flex items-center gap-2">
             <UsersIcon className="w-4 h-4" />
-            <span>Members: {league.memberCount || 0}</span>
+            <span>Uczestnicy: {league.memberCount || 0}</span>
           </div>
         </div>
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={`/leagues/${league.id}`}>View Details</Link>
+          <Link href={`/leagues/${league.id}`}>Zobacz Szczegóły</Link>
         </Button>
       </CardFooter>
     </Card>
