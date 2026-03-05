@@ -126,7 +126,7 @@ export default function CreateLeaguePage() {
   }
 
   return (
-    <div className="container max-w-2xl py-8">
+    <div className="mx-auto max-w-2xl py-8">
       <Button variant="ghost" className="mb-4" asChild>
         <Link href="/leagues">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Leagues

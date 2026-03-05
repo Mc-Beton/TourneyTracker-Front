@@ -17,7 +17,8 @@ export default function MainLayout({
   backAction?: () => void;
 }) {
   const auth = useAuth();
-  const { selectedGameSystemId, setSelectedGameSystemId, gameSystems } = useGameSystem();
+  const { selectedGameSystemId, setSelectedGameSystemId, gameSystems } =
+    useGameSystem();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -27,7 +28,8 @@ export default function MainLayout({
     setMounted(true);
   }, []);
 
-  const isHomePage = pathname === "/" || pathname === "/tournaments";
+  const isHomePage =
+    pathname === "/" || pathname === "/tournaments" || pathname === "/leagues";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,7 +46,10 @@ export default function MainLayout({
             </button>
 
             <div className="flex flex-col items-start gap-1">
-              <Link href="/" className="flex items-center gap-2 hover:opacity-80">
+              <Link
+                href="/"
+                className="flex items-center gap-2 hover:opacity-80"
+              >
                 <Image
                   src="/logo.png"
                   alt="WarBracket Logo"
@@ -71,6 +76,12 @@ export default function MainLayout({
             </div>
 
             <nav className="hidden md:flex gap-3">
+              <Link
+                href="/leagues"
+                className="hover:underline whitespace-nowrap text-primary-foreground"
+              >
+                Ligi
+              </Link>
               {mounted && auth.isAuthenticated && (
                 <>
                   <Link
@@ -184,6 +195,13 @@ export default function MainLayout({
                   ))}
                 </select>
               </div>
+              <Link
+                href="/leagues"
+                className="block py-2 px-3 hover:bg-white/10 rounded text-primary-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Ligi
+              </Link>
               {auth.isAuthenticated ? (
                 <>
                   <Link
