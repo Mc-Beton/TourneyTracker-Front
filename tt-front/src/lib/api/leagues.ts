@@ -31,6 +31,30 @@ export async function listLeagues(
 }
 
 /**
+ * Lists all Leagues where current user is a member (paginated).
+ */
+export async function listJoinedLeagues(
+  page = 0,
+  size = 10,
+): Promise<{ content: LeagueDTO[]; totalElements: number }> {
+  return http<{ content: LeagueDTO[]; totalElements: number }>(
+    `/api/leagues/joined?page=${page}&size=${size}`,
+  );
+}
+
+/**
+ * Lists all Leagues where current user is NOT a member (paginated).
+ */
+export async function listAvailableLeagues(
+  page = 0,
+  size = 10,
+): Promise<{ content: LeagueDTO[]; totalElements: number }> {
+  return http<{ content: LeagueDTO[]; totalElements: number }>(
+    `/api/leagues/available?page=${page}&size=${size}`,
+  );
+}
+
+/**
  * Get League details by ID.
  */
 export async function getLeague(id: number): Promise<LeagueDTO> {
@@ -42,6 +66,13 @@ export async function getLeague(id: number): Promise<LeagueDTO> {
  */
 export async function getLeagueMembers(id: number): Promise<LeagueMemberDTO[]> {
   return http<LeagueMemberDTO[]>(`/api/leagues/${id}/members`);
+}
+
+/**
+ * Get Pending Members (Owner Only).
+ */
+export async function getPendingMembers(id: number): Promise<LeagueMemberDTO[]> {
+  return http<LeagueMemberDTO[]>(`/api/leagues/${id}/members/pending`);
 }
 
 /**

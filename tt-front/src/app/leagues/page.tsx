@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listLeagues } from "@/lib/api/leagues";
+import {
+  listLeagues,
+  listJoinedLeagues,
+  listAvailableLeagues,
+} from "@/lib/api/leagues";
 import { LeagueDTO } from "@/lib/types/league";
 import { LeagueCard } from "@/components/features/leagues/LeagueCard";
 import { Button } from "@/components/ui/button";
@@ -10,15 +14,34 @@ import Link from "next/link";
 import { Loader2, Plus } from "lucide-react";
 
 export default function LeaguesPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState<"available" | "my">("available");
   const [leagues, setLeagues] = useState<LeagueDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If auth is loading, wait.
+    if (authLoading) return;
+  }, [authLoading]);
+
+  useEffect(() => {
     const fetchLeagues = async () => {
+      if (authLoading) return;
+      
+      setLoading(true);
+      setError(null);
       try {
-        const response = await listLeagues(0, 50); // Fetch first 50 for now
+        let response;
+        if (isAuthenticated) {
+          if (activeTab === "my") {
+            response = await listJoinedLeagues(0, 50);
+          } else {
+            response = await listAvailableLeagues(0, 50);
+          }
+        } else {
+          response = await listLeagues(0, 50);
+        }
         setLeagues(response.content || []);
       } catch (err) {
         console.error(err);
@@ -27,10 +50,57 @@ export default function LeaguesPage() {
         setLoading(false);
       }
     };
-    fetchLeagues();
-  }, []);
 
-  if (loading) {
+    fetchLeagues();
+  }, [activeTab, isAuthenticated, authLoading]);
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <p className="text-destructive font-medium">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
+
+    if (leagues.length === 0) {
+      return (
+        <div className="text-center py-20 border rounded-lg bg-muted/10">
+          <h3 className="text-lg font-semibold">
+            {activeTab === "my"
+              ? "You haven't joined any leagues yet"
+              : "No leagues available"}
+          </h3>
+          <p className="text-muted-foreground mt-2">
+            {activeTab === "my"
+              ? "Join a league to see it here!"
+              : "Be the first to create one!"}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {leagues.map((league) => (
+          <LeagueCard key={league.id} league={league} />
+        ))}
+      </div>
+    );
+  };
+
+  if (authLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -38,18 +108,9 @@ export default function LeaguesPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen space-y-4">
-        <p className="text-red-500 font-medium">{error}</p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 container mx-auto py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Leagues</h1>
           <p className="text-muted-foreground mt-2">
@@ -65,20 +126,32 @@ export default function LeaguesPage() {
         )}
       </div>
 
-      {leagues.length === 0 ? (
-        <div className="text-center py-12 border rounded-lg bg-muted/10">
-          <h3 className="text-lg font-semibold">No leagues found</h3>
-          <p className="text-muted-foreground mt-1">
-            Be the first to create one!
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {leagues.map((league) => (
-            <LeagueCard key={league.id} league={league} />
-          ))}
+      {isAuthenticated && (
+        <div className="flex space-x-1 border-b">
+          <button
+            onClick={() => setActiveTab("available")}
+            className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === "available"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Available Leagues
+          </button>
+          <button
+            onClick={() => setActiveTab("my")}
+            className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === "my"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            My Leagues
+          </button>
         </div>
       )}
+
+      {renderContent()}
     </div>
   );
 }
