@@ -207,7 +207,7 @@ export async function leaveLeague(id: number): Promise<void> {
 export async function createChallenge(
   data: CreateChallengeDTO,
 ): Promise<LeagueChallengeDTO> {
-  return http<LeagueChallengeDTO>(`/api/leagues/challenges`, {
+  return http<LeagueChallengeDTO>(`/api/leagues/${data.leagueId}/challenges`, {
     method: "POST",
     body: JSON.stringify(data),
   });
