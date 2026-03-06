@@ -15,6 +15,7 @@ import {
   createChallenge,
   respondToChallenge,
   getMyChallenges,
+  getMyOutgoingChallenges,
 } from "@/lib/api/leagues";
 import {
   LeagueDTO,
@@ -126,8 +127,11 @@ export default function LeagueDetailsPage() {
         const isMember = membersData.some((m) => m.user.id === userId);
         if (isMember) {
           try {
-            const challengesData = await getMyChallenges(id);
-            setMyChallenges(challengesData);
+            const [inChallenges, outChallenges] = await Promise.all([
+              getMyChallenges(id),
+              getMyOutgoingChallenges(id),
+            ]);
+            setMyChallenges([...inChallenges, ...outChallenges]);
           } catch (e) {
             console.error("Failed to load challenges", e);
           }

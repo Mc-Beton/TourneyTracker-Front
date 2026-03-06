@@ -237,3 +237,12 @@ export async function getMyChallenges(
 ): Promise<LeagueChallengeDTO[]> {
   return http<LeagueChallengeDTO[]>(`/api/leagues/${leagueId}/challenges/my`);
 }
+
+/**
+ * Gets outgoing challenges (sent by current user) in a league.
+ */
+export async function getMyOutgoingChallenges(
+  leagueId: number,
+): Promise<LeagueChallengeDTO[]> {
+  return http<LeagueChallengeDTO[]>(`/api/leagues/${leagueId}/challenges/outgoing`);
+}
