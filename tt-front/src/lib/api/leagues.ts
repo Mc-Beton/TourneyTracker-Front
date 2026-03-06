@@ -222,7 +222,7 @@ export async function respondToChallenge(
   accepted: boolean,
 ): Promise<void> {
   return http<void>(
-    `/api/leagues/challenges/${challengeId}/respond?accepted=${accepted}`,
+    `/api/leagues/challenges/${challengeId}/respond?accept=${accepted}`,
     {
       method: "POST",
     },
@@ -244,5 +244,7 @@ export async function getMyChallenges(
 export async function getMyOutgoingChallenges(
   leagueId: number,
 ): Promise<LeagueChallengeDTO[]> {
-  return http<LeagueChallengeDTO[]>(`/api/leagues/${leagueId}/challenges/outgoing`);
+  return http<LeagueChallengeDTO[]>(
+    `/api/leagues/${leagueId}/challenges/outgoing`,
+  );
 }
