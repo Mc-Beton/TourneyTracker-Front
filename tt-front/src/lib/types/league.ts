@@ -1,7 +1,20 @@
+export type MatchStatus =
+  | "PENDING"
+  | "SCHEDULED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
+export type TournamentStatus =
+  | "PENDING"
+  | "DRAFT"
+  | "ACTIVE"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
 export type LeagueMemberStatus = "PENDING" | "APPROVED" | "REJECTED";
-export type LeagueApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+// LeagueApprovalStatus removed
 export type LeagueStatus = "DRAFT" | "ACTIVE" | "COMPLETED" | "ARCHIVED";
-export type ChallengeStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
+export type ChallengeStatus = MatchStatus;
 
 export interface UserDTO {
   id: number;
@@ -108,10 +121,19 @@ export interface LeagueMatchDTO {
   leagueId: number;
   match: SingleMatchResponseDTO;
   submittedBy: UserDTO;
-  status: LeagueApprovalStatus;
+  status: MatchStatus;
   submitDate: string;
   processedDate?: string;
   rejectionReason?: string;
 }
 
-export type LeagueTournamentDTO = TournamentResponseDTO;
+export interface LeagueTournamentDTO {
+  id: number;
+  leagueId: number;
+  tournament: TournamentResponseDTO;
+  submittedBy: UserDTO;
+  status: TournamentStatus;
+  submitDate: string;
+  processedDate?: string;
+  rejectionReason?: string;
+}
