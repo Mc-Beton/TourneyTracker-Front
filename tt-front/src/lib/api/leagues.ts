@@ -235,5 +235,5 @@ export async function respondToChallenge(
 export async function getMyChallenges(
   leagueId: number,
 ): Promise<LeagueChallengeDTO[]> {
-  return http<LeagueChallengeDTO[]>(`/api/leagues/${leagueId}/my-challenges`);
+  return http<LeagueChallengeDTO[]>(`/api/leagues/${leagueId}/challenges/my`);
 }
