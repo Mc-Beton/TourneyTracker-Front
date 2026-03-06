@@ -16,11 +16,13 @@ import {
   respondToChallenge,
   getMyChallenges,
   getMyOutgoingChallenges,
+  getLeagueMatches,
 } from "@/lib/api/leagues";
 import {
   LeagueDTO,
   LeagueMemberDTO,
   LeagueChallengeDTO,
+  LeagueMatchDTO,
   LeagueStatus,
 } from "@/lib/types/league";
 import {
@@ -92,6 +94,10 @@ export default function LeagueDetailsPage() {
   const [members, setMembers] = useState<LeagueMemberDTO[]>([]);
   const [pendingMembers, setPendingMembers] = useState<LeagueMemberDTO[]>([]);
   const [myChallenges, setMyChallenges] = useState<LeagueChallengeDTO[]>([]);
+  const [outgoingChallenges, setOutgoingChallenges] = useState<
+    LeagueChallengeDTO[]
+  >([]);
+  const [leagueMatches, setLeagueMatches] = useState<LeagueMatchDTO[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,8 +116,12 @@ export default function LeagueDetailsPage() {
       const leagueData = await getLeague(id);
       setLeague(leagueData);
 
-      const membersData = await getLeagueMembers(id);
+      const [membersData, matchesData] = await Promise.all([
+        getLeagueMembers(id),
+        getLeagueMatches(id),
+      ]);
       setMembers(membersData);
+      setLeagueMatches(matchesData?.content || []);
 
       if (isAuthenticated && userId) {
         if (leagueData.owner?.id === userId) {
@@ -570,9 +580,91 @@ export default function LeagueDetailsPage() {
               <CardDescription>Ostatnie rozegrane spotkania</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Funkcja w przygotowaniu (API dostępne)
-              </div>
+              {leagueMatches.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Brak rozegranych meczów w tej lidze.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {leagueMatches.map((m) => {
+                    const match = m.match;
+                    const p1 = match.player1Name || "Nieznany";
+                    const p2 = match.player2Name || "Nieznany";
+                    const hasResult =
+                      match.player1Score !== undefined &&
+                      match.player1Score !== null;
+
+                    const p1Score = hasResult ? match.player1Score : "-";
+                    const p2Score = hasResult ? match.player2Score : "-";
+
+                    const date = new Date(
+                      match.startTime || m.submitDate,
+                    ).toLocaleDateString();
+
+                    return (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="font-semibold text-lg">
+                            <span
+                              className={
+                                match.winnerId === match.player1Id
+                                  ? "text-green-600 font-bold"
+                                  : ""
+                              }
+                            >
+                              {p1}
+                            </span>
+                            <span className="mx-2 text-muted-foreground">
+                              vs
+                            </span>
+                            <span
+                              className={
+                                match.winnerId === match.player2Id
+                                  ? "text-green-600 font-bold"
+                                  : ""
+                              }
+                            >
+                              {p2}
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <Calendar className="w-3 h-3" />
+                            {date}
+                            {m.submittedBy && (
+                              <span className="text-xs ml-2">
+                                (Zgłosił: {m.submittedBy.name})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="text-2xl font-bold bg-muted px-3 py-1 rounded">
+                            {p1Score} : {p2Score}
+                          </div>
+                          <div
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
+                              m.status === "APPROVED"
+                                ? "bg-green-100 text-green-700 border-green-200"
+                                : m.status === "REJECTED"
+                                  ? "bg-red-100 text-red-700 border-red-200"
+                                  : "bg-yellow-100 text-yellow-700 border-yellow-200"
+                            }`}
+                          >
+                            {m.status === "APPROVED"
+                              ? "Zatwierdzony"
+                              : m.status === "REJECTED"
+                                ? "Odrzucony"
+                                : "Oczekujący"}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

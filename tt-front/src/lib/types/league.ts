@@ -22,6 +22,9 @@ export interface SingleMatchResponseDTO {
   player1Name: string;
   player2Id: number;
   player2Name: string;
+  winnerId?: number;
+  player1Score?: number;
+  player2Score?: number;
 }
 
 export interface TournamentResponseDTO {
@@ -100,5 +103,15 @@ export interface LeagueMemberDTO {
   losses?: number;
 }
 
-export type LeagueMatchDTO = SingleMatchResponseDTO;
+export interface LeagueMatchDTO {
+  id: number;
+  leagueId: number;
+  match: SingleMatchResponseDTO;
+  submittedBy: UserDTO;
+  status: LeagueApprovalStatus;
+  submitDate: string;
+  processedDate?: string;
+  rejectionReason?: string;
+}
+
 export type LeagueTournamentDTO = TournamentResponseDTO;

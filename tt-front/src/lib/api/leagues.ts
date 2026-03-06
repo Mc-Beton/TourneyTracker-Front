@@ -241,10 +241,27 @@ export async function getMyChallenges(
 /**
  * Gets outgoing challenges (sent by current user) in a league.
  */
+
 export async function getMyOutgoingChallenges(
   leagueId: number,
 ): Promise<LeagueChallengeDTO[]> {
   return http<LeagueChallengeDTO[]>(
     `/api/leagues/${leagueId}/challenges/outgoing`,
+  );
+}
+
+/**
+ * Gets matches for a league.
+ */
+export async function getLeagueMatches(
+  leagueId: number,
+  page = 0,
+  size: number = 20,
+): Promise<{ content: LeagueMatchDTO[]; totalElements: number }> {
+  return http<{ content: LeagueMatchDTO[]; totalElements: number }>(
+    `/api/leagues/${leagueId}/matches`,
+    {
+      params: { page, size },
+    },
   );
 }
