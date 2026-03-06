@@ -24,6 +24,7 @@ import {
   LeagueChallengeDTO,
   LeagueMatchDTO,
   LeagueStatus,
+  MatchStatus,
 } from "@/lib/types/league";
 import {
   Card,
@@ -41,7 +42,6 @@ import {
   Check,
   X,
   Swords,
-  Settings,
   LogOut,
   Calendar,
   Sword,
@@ -82,21 +82,44 @@ function LeagueStatusBadge({ status }: { status: LeagueStatus }) {
   );
 }
 
+function MatchStatusBadge({ status }: { status: MatchStatus }) {
+  const styles: Record<string, string> = {
+    PENDING: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    SCHEDULED: "bg-blue-100 text-blue-800 border-blue-200",
+    IN_PROGRESS: "bg-purple-100 text-purple-800 border-purple-200",
+    COMPLETED: "bg-green-100 text-green-800 border-green-200",
+    CANCELLED: "bg-red-100 text-red-800 border-red-200",
+  };
+
+  const labels: Record<string, string> = {
+    PENDING: "Oczekujący",
+    SCHEDULED: "Zaplanowany",
+    IN_PROGRESS: "W trakcie",
+    COMPLETED: "Zakończony",
+    CANCELLED: "Anulowany",
+  };
+
+  return (
+    <span
+      className={`px-2 py-1 rounded text-xs font-semibold border ${styles[status] || ""}`}
+    >
+      {labels[status] || status}
+    </span>
+  );
+}
+
 export default function LeagueDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const id = parseInt(
     Array.isArray(params.id) ? params.id[0] : params.id || "0",
   );
-  const { isAuthenticated, userId, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
 
   const [league, setLeague] = useState<LeagueDTO | null>(null);
   const [members, setMembers] = useState<LeagueMemberDTO[]>([]);
   const [pendingMembers, setPendingMembers] = useState<LeagueMemberDTO[]>([]);
   const [myChallenges, setMyChallenges] = useState<LeagueChallengeDTO[]>([]);
-  const [outgoingChallenges, setOutgoingChallenges] = useState<
-    LeagueChallengeDTO[]
-  >([]);
   const [leagueMatches, setLeagueMatches] = useState<LeagueMatchDTO[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -156,9 +179,9 @@ export default function LeagueDetailsPage() {
   };
 
   useEffect(() => {
-    if (!id || authLoading) return;
+    if (!id) return;
     fetchData();
-  }, [id, authLoading, isAuthenticated, userId]);
+  }, [id, isAuthenticated, userId]);
 
   const isMember = members.some((m) => m.user.id === userId);
   const isOwner = league?.owner?.id === userId;
@@ -268,7 +291,7 @@ export default function LeagueDetailsPage() {
     }
   };
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -644,21 +667,7 @@ export default function LeagueDetailsPage() {
                           <div className="text-2xl font-bold bg-muted px-3 py-1 rounded">
                             {p1Score} : {p2Score}
                           </div>
-                          <div
-                            className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
-                              m.status === "APPROVED"
-                                ? "bg-green-100 text-green-700 border-green-200"
-                                : m.status === "REJECTED"
-                                  ? "bg-red-100 text-red-700 border-red-200"
-                                  : "bg-yellow-100 text-yellow-700 border-yellow-200"
-                            }`}
-                          >
-                            {m.status === "APPROVED"
-                              ? "Zatwierdzony"
-                              : m.status === "REJECTED"
-                                ? "Odrzucony"
-                                : "Oczekujący"}
-                          </div>
+                          <MatchStatusBadge status={m.status} />
                         </div>
                       </div>
                     );
@@ -704,9 +713,7 @@ export default function LeagueDetailsPage() {
                             wyzywa Cię na pojedynek
                           </p>
                         </div>
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                          Oczekuje
-                        </span>
+                        <MatchStatusBadge status={challenge.status} />
                       </div>
                       <div className="text-sm text-gray-600 mb-4">
                         <p>
@@ -768,21 +775,7 @@ export default function LeagueDetailsPage() {
                         <span className="font-medium">
                           vs {challenge.challengedName}
                         </span>
-                        <span
-                          className={`text-xs px-2 py-1 rounded ${
-                            challenge.status === "ACCEPTED"
-                              ? "bg-green-100 text-green-800"
-                              : challenge.status === "REJECTED"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {challenge.status === "PENDING"
-                            ? "Oczekuje"
-                            : challenge.status === "ACCEPTED"
-                              ? "Przyjęte"
-                              : "Odrzucone"}
-                        </span>
+                        <MatchStatusBadge status={challenge.status} />
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         Wysłano:{" "}
