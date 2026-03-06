@@ -81,8 +81,6 @@ export async function getPendingMembers(
   return http<LeagueMemberDTO[]>(`/api/leagues/${id}/members/pending`);
 }
 
-
-
 /**
  * Get League Tournaments (History).
  */
