@@ -228,14 +228,23 @@ export default function LeagueDetailsPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Czy na pewno usunąć ligę? Ta operacja jest nieodwracalna."))
+    if (
+      !confirm(
+        "Czy na pewno usunąć ligę? Ta operacja jest nieodwracalna.\n\nUwaga: Możesz usunąć ligę tylko w statusie DRAFT, jeśli jesteś jedynym członkiem i nie ma przypisanych meczy.",
+      )
+    )
       return;
     try {
       setActionLoading(true);
       await deleteLeague(id);
       router.push("/leagues");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to delete league", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Nie udało się usunąć ligi";
+      alert(`Błąd: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
@@ -350,7 +359,11 @@ export default function LeagueDetailsPage() {
             {joining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {league.status === "DRAFT"
               ? "Liga w przygotowaniu"
-              : "Dołącz do Ligi"}
+              : league.status === "COMPLETED"
+                ? "Liga zakończona"
+                : league.status === "ARCHIVED"
+                  ? "Liga zarchiwizowana"
+                  : "Dołącz do Ligi"}
           </Button>
         )}
         {isAuthenticated && isMember && !isOwner && (
@@ -376,32 +389,52 @@ export default function LeagueDetailsPage() {
               Edytuj
             </Button>
             {league.status === "DRAFT" && (
-              <Button
-                onClick={() => handleStatusChange("ACTIVE")}
-                disabled={actionLoading}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Aktywuj Ligę
-              </Button>
+              <>
+                <Button
+                  onClick={() => handleStatusChange("ACTIVE")}
+                  disabled={actionLoading}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Aktywuj Ligę
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={handleDelete}
+                  disabled={actionLoading}
+                  title="Usuń ligę"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
             )}
             {league.status === "ACTIVE" && (
+              <>
+                <Button
+                  onClick={() => handleStatusChange("DRAFT")}
+                  variant="outline"
+                  disabled={actionLoading}
+                >
+                  Cofnij do Draft
+                </Button>
+                <Button
+                  onClick={() => handleStatusChange("COMPLETED")}
+                  variant="secondary"
+                  disabled={actionLoading}
+                >
+                  Zakończ Ligę
+                </Button>
+              </>
+            )}
+            {league.status === "COMPLETED" && (
               <Button
-                onClick={() => handleStatusChange("COMPLETED")}
+                onClick={() => handleStatusChange("ARCHIVED")}
                 variant="secondary"
                 disabled={actionLoading}
               >
-                Zakończ Ligę
+                Zarchiwizuj
               </Button>
             )}
-            <Button
-              variant="destructive"
-              size="icon"
-              onClick={handleDelete}
-              disabled={actionLoading}
-              title="Usuń ligę"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         )}
       </div>
@@ -412,6 +445,26 @@ export default function LeagueDetailsPage() {
           <p>
             Ta liga jest statusie <strong>Draft</strong>. Rozgrywki rozpoczną
             się wkrótce po aktywacji przez organizatora.
+          </p>
+        </div>
+      )}
+
+      {league.status === "COMPLETED" && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5" />
+          <p>
+            Ta liga została <strong>zakończona</strong>. Nie można już zgłaszać
+            nowych meczów.
+          </p>
+        </div>
+      )}
+
+      {league.status === "ARCHIVED" && (
+        <div className="bg-gray-50 border border-gray-200 text-gray-800 p-4 rounded-md flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5" />
+          <p>
+            Ta liga została <strong>zarchiwizowana</strong>. Jest tylko do
+            odczytu.
           </p>
         </div>
       )}
