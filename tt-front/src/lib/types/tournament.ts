@@ -109,6 +109,8 @@ export type CreateTournamentDTO = {
   pointsForWin?: number;
   pointsForDraw?: number;
   pointsForLoss?: number;
+  // Liga
+  leagueId?: number;
 };
 
 export type ParticipantStatsDTO = {

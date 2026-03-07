@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createTournament } from "@/lib/api/tournaments";
 import { getGameSystems } from "@/lib/api/systems";
+import { listJoinedLeagues } from "@/lib/api/leagues";
 import { useAuth } from "@/lib/auth/useAuth";
 import type { IdNameDTO } from "@/lib/types/systems";
 import type {
@@ -12,6 +13,7 @@ import type {
   TournamentPointsSystem,
   RoundStartMode,
 } from "@/lib/types/tournament";
+import type { LeagueDTO } from "@/lib/types/league";
 import MainLayout from "@/components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,7 +61,11 @@ function toLocalDateInputValue(d: Date) {
 
 export default function CreateTournamentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const auth = useAuth();
+
+  const leagueIdFromUrl = searchParams.get("leagueId");
+  const isFromLeague = !!leagueIdFromUrl;
 
   const [form, setForm] = useState<CreateTournamentDTO>({
     name: "",
@@ -94,6 +100,8 @@ export default function CreateTournamentPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [gameSystems, setGameSystems] = useState<IdNameDTO[]>([]);
   const [loadingSystems, setLoadingSystems] = useState(true);
+  const [leagues, setLeagues] = useState<LeagueDTO[]>([]);
+  const [loadingLeagues, setLoadingLeagues] = useState(true);
 
   useEffect(() => {
     if (auth.token) {
@@ -106,8 +114,20 @@ export default function CreateTournamentPage() {
         })
         .catch((e) => console.error("Failed to load game systems:", e))
         .finally(() => setLoadingSystems(false));
+
+      // Load user's joined leagues
+      listJoinedLeagues(0, 100)
+        .then((response) => {
+          setLeagues(response.content);
+          // If leagueId is in URL, set it in form
+          if (leagueIdFromUrl) {
+            update("leagueId", Number(leagueIdFromUrl));
+          }
+        })
+        .catch((e) => console.error("Failed to load leagues:", e))
+        .finally(() => setLoadingLeagues(false));
     }
-  }, [auth.token]);
+  }, [auth.token, leagueIdFromUrl]);
 
   const canSubmit = useMemo(() => {
     if (!form.name.trim()) return false;
@@ -391,6 +411,41 @@ export default function CreateTournamentPage() {
                     </option>
                   ))}
                 </select>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Liga (opcjonalnie)
+              </label>
+              {loadingLeagues ? (
+                <div className="text-sm text-muted-foreground">
+                  Ładowanie...
+                </div>
+              ) : (
+                <select
+                  value={form.leagueId ?? ""}
+                  onChange={(e) =>
+                    update(
+                      "leagueId",
+                      e.target.value ? Number(e.target.value) : undefined,
+                    )
+                  }
+                  disabled={isFromLeague}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">Brak - turniej niezależny</option>
+                  {leagues.map((league) => (
+                    <option key={league.id} value={league.id}>
+                      {league.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {isFromLeague && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Liga została automatycznie wybrana
+                </p>
               )}
             </div>
 

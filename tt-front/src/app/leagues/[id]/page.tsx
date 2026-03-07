@@ -811,9 +811,19 @@ export default function LeagueDetailsPage() {
 
         <TabsContent value="tournaments" className="pt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Turnieje Ligowe</CardTitle>
-              <CardDescription>Historia turniejów w lidze</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Turnieje Ligowe</CardTitle>
+                <CardDescription>Historia turniejów w lidze</CardDescription>
+              </div>
+              {isAuthenticated && isMember && (
+                <Button
+                  onClick={() => router.push(`/tournaments/new?leagueId=${id}`)}
+                >
+                  <Trophy className="mr-2 h-4 w-4" />
+                  Dodaj Turniej
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {leagueTournaments.length === 0 ? (
