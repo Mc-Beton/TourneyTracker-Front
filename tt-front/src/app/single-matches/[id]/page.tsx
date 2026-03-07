@@ -193,9 +193,7 @@ export default function SingleMatchDetailsPage() {
       await deleteSingleMatch(matchId, auth.token);
       router.push("/single-matches/my");
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Błąd podczas usuwania meczu",
-      );
+      setError(e instanceof Error ? e.message : "Błąd podczas usuwania meczu");
       setProcessing(false);
       setShowDeleteDialog(false);
     }
@@ -811,9 +809,12 @@ export default function SingleMatchDetailsPage() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Czy na pewno chcesz usunąć ten mecz?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Czy na pewno chcesz usunąć ten mecz?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Ta operacja jest nieodwracalna. Mecz zostanie trwale usunięty z systemu.
+              Ta operacja jest nieodwracalna. Mecz zostanie trwale usunięty z
+              systemu.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

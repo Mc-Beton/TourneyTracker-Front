@@ -3,15 +3,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
-import {
-  getMatchSummary,
-  updateSingleMatch,
-} from "@/lib/api/singleMatches";
-import {
-  getDeployments,
-  getPrimaryMissions,
-} from "@/lib/api/systems";
-import type { CreateSingleMatchDTO, MatchSummaryDTO } from "@/lib/types/singleMatch";
+import { getMatchSummary, updateSingleMatch } from "@/lib/api/singleMatches";
+import { getDeployments, getPrimaryMissions } from "@/lib/api/systems";
+import type {
+  CreateSingleMatchDTO,
+  MatchSummaryDTO,
+} from "@/lib/types/singleMatch";
 import { MatchMode } from "@/lib/types/singleMatch";
 import type { IdNameDTO } from "@/lib/types/systems";
 import MainLayout from "@/components/MainLayout";
@@ -37,8 +34,12 @@ export default function EditSingleMatchPage() {
 
   // Form state
   const [matchName, setMatchName] = useState("");
-  const [selectedDeploymentId, setSelectedDeploymentId] = useState<number | null>(null);
-  const [selectedPrimaryMissionId, setSelectedPrimaryMissionId] = useState<number | null>(null);
+  const [selectedDeploymentId, setSelectedDeploymentId] = useState<
+    number | null
+  >(null);
+  const [selectedPrimaryMissionId, setSelectedPrimaryMissionId] = useState<
+    number | null
+  >(null);
   const [armyPower, setArmyPower] = useState<number | null>(null);
   const [matchMode, setMatchMode] = useState<MatchMode>(MatchMode.LIVE);
 
@@ -71,7 +72,7 @@ export default function EditSingleMatchPage() {
     // We need to get gameSystemId from the match
     // For now, we'll need to add it to the MatchSummaryDTO or fetch it separately
     // Let's assume we have access to it through match details
-    
+
     // Temporary: We'll need to fetch these without gameSystemId filter
     // or add gameSystemId to MatchSummaryDTO
     getDeployments(1, auth.token) // placeholder - should use match's game system ID
@@ -205,7 +206,9 @@ export default function EditSingleMatchPage() {
                 id="primaryMission"
                 value={selectedPrimaryMissionId?.toString() || ""}
                 onChange={(e) =>
-                  setSelectedPrimaryMissionId(e.target.value ? Number(e.target.value) : null)
+                  setSelectedPrimaryMissionId(
+                    e.target.value ? Number(e.target.value) : null,
+                  )
                 }
                 className="mt-1.5 w-full border border-input bg-background px-3 py-2 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
@@ -225,7 +228,9 @@ export default function EditSingleMatchPage() {
                 id="deployment"
                 value={selectedDeploymentId?.toString() || ""}
                 onChange={(e) =>
-                  setSelectedDeploymentId(e.target.value ? Number(e.target.value) : null)
+                  setSelectedDeploymentId(
+                    e.target.value ? Number(e.target.value) : null,
+                  )
                 }
                 className="mt-1.5 w-full border border-input bg-background px-3 py-2 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
@@ -255,11 +260,7 @@ export default function EditSingleMatchPage() {
 
             {/* Buttons */}
             <div className="flex gap-3 flex-col sm:flex-row">
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="flex-1"
-              >
+              <Button type="submit" disabled={submitting} className="flex-1">
                 {submitting ? "Zapisuje..." : "Zapisz zmiany"}
               </Button>
               <Button
