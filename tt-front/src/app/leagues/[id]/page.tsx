@@ -613,16 +613,33 @@ export default function LeagueDetailsPage() {
                     const match = m.match;
                     const p1 = match.player1Name || "Nieznany";
                     const p2 = match.player2Name || "Nieznany";
-                    const hasResult =
-                      match.player1Score !== undefined &&
-                      match.player1Score !== null;
 
-                    const p1Score = hasResult ? match.player1Score : "-";
-                    const p2Score = hasResult ? match.player2Score : "-";
+                    // Check if match has scores - handle 0 as valid score
+                    const hasScores =
+                      (match.player1Score !== undefined &&
+                        match.player1Score !== null) ||
+                      (match.player2Score !== undefined &&
+                        match.player2Score !== null);
+
+                    // Format scores, showing 0 as valid score
+                    const p1Score =
+                      match.player1Score !== undefined &&
+                      match.player1Score !== null
+                        ? match.player1Score.toFixed(0)
+                        : "-";
+                    const p2Score =
+                      match.player2Score !== undefined &&
+                      match.player2Score !== null
+                        ? match.player2Score.toFixed(0)
+                        : "-";
 
                     const date = new Date(
                       match.startTime || m.submitDate,
                     ).toLocaleDateString();
+
+                    // Check if this is a completed match without scores
+                    const isCompletedWithoutScores =
+                      m.status === "COMPLETED" && !hasScores;
 
                     return (
                       <div
@@ -664,9 +681,20 @@ export default function LeagueDetailsPage() {
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <div className="text-2xl font-bold bg-muted px-3 py-1 rounded">
+                          <div
+                            className={`text-2xl font-bold px-3 py-1 rounded ${
+                              isCompletedWithoutScores
+                                ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                                : "bg-muted"
+                            }`}
+                          >
                             {p1Score} : {p2Score}
                           </div>
+                          {isCompletedWithoutScores && (
+                            <span className="text-xs text-yellow-600">
+                              Brak wyników
+                            </span>
+                          )}
                           <MatchStatusBadge status={m.status} />
                         </div>
                       </div>
