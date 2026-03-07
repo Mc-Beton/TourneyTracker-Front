@@ -18,14 +18,17 @@ import {
   getMyChallenges,
   getMyOutgoingChallenges,
   getLeagueMatches,
+  getLeagueTournaments,
 } from "@/lib/api/leagues";
 import {
   LeagueDTO,
   LeagueMemberDTO,
   LeagueChallengeDTO,
   LeagueMatchDTO,
+  LeagueTournamentDTO,
   LeagueStatus,
   MatchStatus,
+  TournamentStatus,
 } from "@/lib/types/league";
 import {
   Card,
@@ -110,6 +113,34 @@ function MatchStatusBadge({ status }: { status: MatchStatus }) {
   );
 }
 
+function TournamentStatusBadge({ status }: { status: TournamentStatus }) {
+  const styles: Record<string, string> = {
+    PENDING: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    DRAFT: "bg-gray-100 text-gray-800 border-gray-200",
+    ACTIVE: "bg-blue-100 text-blue-800 border-blue-200",
+    IN_PROGRESS: "bg-purple-100 text-purple-800 border-purple-200",
+    COMPLETED: "bg-green-100 text-green-800 border-green-200",
+    CANCELLED: "bg-red-100 text-red-800 border-red-200",
+  };
+
+  const labels: Record<string, string> = {
+    PENDING: "Oczekujący",
+    DRAFT: "Draft",
+    ACTIVE: "Aktywny",
+    IN_PROGRESS: "W trakcie",
+    COMPLETED: "Zakończony",
+    CANCELLED: "Anulowany",
+  };
+
+  return (
+    <span
+      className={`px-2 py-1 rounded text-xs font-semibold border ${styles[status] || ""}`}
+    >
+      {labels[status] || status}
+    </span>
+  );
+}
+
 export default function LeagueDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -123,6 +154,9 @@ export default function LeagueDetailsPage() {
   const [pendingMembers, setPendingMembers] = useState<LeagueMemberDTO[]>([]);
   const [myChallenges, setMyChallenges] = useState<LeagueChallengeDTO[]>([]);
   const [leagueMatches, setLeagueMatches] = useState<LeagueMatchDTO[]>([]);
+  const [leagueTournaments, setLeagueTournaments] = useState<
+    LeagueTournamentDTO[]
+  >([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,12 +175,14 @@ export default function LeagueDetailsPage() {
       const leagueData = await getLeague(id);
       setLeague(leagueData);
 
-      const [membersData, matchesData] = await Promise.all([
+      const [membersData, matchesData, tournamentsData] = await Promise.all([
         getLeagueMembers(id),
         getLeagueMatches(id),
+        getLeagueTournaments(id),
       ]);
       setMembers(membersData);
       setLeagueMatches(matchesData?.content || []);
+      setLeagueTournaments(tournamentsData?.content || []);
 
       if (isAuthenticated && userId) {
         if (leagueData.owner?.id === userId) {
@@ -470,9 +506,10 @@ export default function LeagueDetailsPage() {
       )}
 
       <Tabs defaultValue="members" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-4 lg:w-[550px]">
           <TabsTrigger value="members">Tabela</TabsTrigger>
           <TabsTrigger value="matches">Mecze</TabsTrigger>
+          <TabsTrigger value="tournaments">Turnieje</TabsTrigger>
           {isAuthenticated && isMember && (
             <TabsTrigger value="challenges">Wyzwania</TabsTrigger>
           )}
@@ -761,6 +798,60 @@ export default function LeagueDetailsPage() {
                               </span>
                             )}
                             <MatchStatusBadge status={m.status} />
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tournaments" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Turnieje Ligowe</CardTitle>
+              <CardDescription>Historia turniejów w lidze</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {leagueTournaments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Brak turniejów w tej lidze.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {leagueTournaments.map((lt) => {
+                    const tournament = lt.tournament;
+                    const date = new Date(
+                      tournament.startDate || lt.submitDate,
+                    ).toLocaleDateString();
+
+                    return (
+                      <Link
+                        key={lt.id}
+                        href={`/tournaments/${tournament.id}`}
+                        className="block"
+                      >
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-md transition-shadow cursor-pointer">
+                          <div className="flex flex-col gap-1">
+                            <div className="font-semibold text-lg">
+                              {tournament.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <Calendar className="w-3 h-3" />
+                              {date}
+                              {lt.submittedBy && (
+                                <span className="text-xs ml-2">
+                                  (Zgłosił: {lt.submittedBy.name})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <Trophy className="h-8 w-8 text-yellow-600" />
+                            <TournamentStatusBadge status={lt.status} />
                           </div>
                         </div>
                       </Link>
