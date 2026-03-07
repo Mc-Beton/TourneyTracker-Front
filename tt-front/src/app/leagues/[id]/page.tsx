@@ -47,6 +47,7 @@ import {
   Calendar,
   Sword,
   ShieldAlert,
+  Edit,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -366,6 +367,14 @@ export default function LeagueDetailsPage() {
         )}
         {isAuthenticated && isOwner && (
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/leagues/${id}/edit`)}
+              disabled={actionLoading}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edytuj
+            </Button>
             {league.status === "DRAFT" && (
               <Button
                 onClick={() => handleStatusChange("ACTIVE")}
