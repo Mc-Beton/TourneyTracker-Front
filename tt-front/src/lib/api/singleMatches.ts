@@ -91,3 +91,29 @@ export function getCurrentMatch(
     },
   );
 }
+
+export function updateSingleMatch(
+  matchId: number,
+  payload: CreateSingleMatchDTO,
+  token: string,
+): Promise<SingleMatchResponseDTO> {
+  return http<SingleMatchResponseDTO>(`/api/matches/single/${matchId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteSingleMatch(
+  matchId: number,
+  token: string,
+): Promise<void> {
+  return http<void>(`/api/matches/single/${matchId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

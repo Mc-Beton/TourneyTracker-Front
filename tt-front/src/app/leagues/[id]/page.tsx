@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth/useAuth";
 import {
   getLeague,
@@ -642,62 +643,65 @@ export default function LeagueDetailsPage() {
                       m.status === "COMPLETED" && !hasScores;
 
                     return (
-                      <div
+                      <Link
                         key={m.id}
-                        className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                        href={`/single-matches/${match.matchId}`}
+                        className="block"
                       >
-                        <div className="flex flex-col gap-1">
-                          <div className="font-semibold text-lg">
-                            <span
-                              className={
-                                match.winnerId === match.player1Id
-                                  ? "text-green-600 font-bold"
-                                  : ""
-                              }
-                            >
-                              {p1}
-                            </span>
-                            <span className="mx-2 text-muted-foreground">
-                              vs
-                            </span>
-                            <span
-                              className={
-                                match.winnerId === match.player2Id
-                                  ? "text-green-600 font-bold"
-                                  : ""
-                              }
-                            >
-                              {p2}
-                            </span>
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-md transition-shadow cursor-pointer">
+                          <div className="flex flex-col gap-1">
+                            <div className="font-semibold text-lg">
+                              <span
+                                className={
+                                  match.winnerId === match.player1Id
+                                    ? "text-green-600 font-bold"
+                                    : ""
+                                }
+                              >
+                                {p1}
+                              </span>
+                              <span className="mx-2 text-muted-foreground">
+                                vs
+                              </span>
+                              <span
+                                className={
+                                  match.winnerId === match.player2Id
+                                    ? "text-green-600 font-bold"
+                                    : ""
+                                }
+                              >
+                                {p2}
+                              </span>
+                            </div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <Calendar className="w-3 h-3" />
+                              {date}
+                              {m.submittedBy && (
+                                <span className="text-xs ml-2">
+                                  (Zgłosił: {m.submittedBy.name})
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-2">
-                            <Calendar className="w-3 h-3" />
-                            {date}
-                            {m.submittedBy && (
-                              <span className="text-xs ml-2">
-                                (Zgłosił: {m.submittedBy.name})
+                          <div className="flex flex-col items-end gap-1">
+                            <div
+                              className={`text-2xl font-bold px-3 py-1 rounded ${
+                                isCompletedWithoutScores
+                                  ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                                  : "bg-muted"
+                              }`}
+                            >
+                              {p1Score} : {p2Score}
+                            </div>
+                            {isCompletedWithoutScores && (
+                              <span className="text-xs text-yellow-600">
+                                Brak wyników
                               </span>
                             )}
+                            <MatchStatusBadge status={m.status} />
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <div
-                            className={`text-2xl font-bold px-3 py-1 rounded ${
-                              isCompletedWithoutScores
-                                ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
-                                : "bg-muted"
-                            }`}
-                          >
-                            {p1Score} : {p2Score}
-                          </div>
-                          {isCompletedWithoutScores && (
-                            <span className="text-xs text-yellow-600">
-                              Brak wyników
-                            </span>
-                          )}
-                          <MatchStatusBadge status={m.status} />
-                        </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>

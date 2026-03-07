@@ -7,6 +7,7 @@ import {
   getMatchSummary,
   reportReady,
   startMatch,
+  deleteSingleMatch,
 } from "@/lib/api/singleMatches";
 import type { MatchSummaryDTO, ScoreType } from "@/lib/types/singleMatch";
 import MainLayout from "@/components/MainLayout";
@@ -21,7 +22,19 @@ import {
   XCircle,
   Swords,
   Clock,
+  Edit,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const SCORE_TYPE_LABELS: Record<ScoreType, string> = {
   MAIN_SCORE: "Primary points",
@@ -38,6 +51,7 @@ export default function SingleMatchDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const matchId = params.id ? Number(params.id) : null;
@@ -169,6 +183,29 @@ export default function SingleMatchDetailsPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!auth.token || !matchId) return;
+
+    setProcessing(true);
+    setError(null);
+
+    try {
+      await deleteSingleMatch(matchId, auth.token);
+      router.push("/single-matches/my");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Błąd podczas usuwania meczu",
+      );
+      setProcessing(false);
+      setShowDeleteDialog(false);
+    }
+  }
+
+  function handleEdit() {
+    if (!matchId) return;
+    router.push(`/single-matches/${matchId}/edit`);
+  }
+
   if (loading)
     return (
       <MainLayout>
@@ -200,6 +237,16 @@ export default function SingleMatchDetailsPage() {
   const isCurrentUserPlayer1 = match.currentUserId === match.player1Id;
   const player1Ready = isCurrentUserPlayer1 ? match.ready : match.opponentReady;
   const player2Ready = isCurrentUserPlayer1 ? match.opponentReady : match.ready;
+
+  // Check if match is in SCHEDULED status (no one is ready, not started, not finished)
+  const isScheduledStatus =
+    !isFinished &&
+    !match.ready &&
+    !match.opponentReady &&
+    !match.rounds.some((r) => Object.keys(r.player1).length > 0);
+
+  // Only creator (player1) can edit/delete
+  const canEditOrDelete = isCurrentUserPlayer1 && isScheduledStatus;
 
   // Określ status meczu
   const getMatchStatus = () => {
@@ -261,6 +308,27 @@ export default function SingleMatchDetailsPage() {
               </div>
               {!isFinished && (
                 <div className="flex gap-2 flex-wrap">
+                  {canEditOrDelete && (
+                    <>
+                      <Button
+                        onClick={handleEdit}
+                        variant="outline"
+                        className="min-h-[44px]"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edytuj
+                      </Button>
+                      <Button
+                        onClick={() => setShowDeleteDialog(true)}
+                        variant="destructive"
+                        className="min-h-[44px]"
+                        disabled={processing}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Usuń
+                      </Button>
+                    </>
+                  )}
                   {match.ready && match.opponentReady ? (
                     <>
                       {match.rounds.some(
@@ -738,6 +806,28 @@ export default function SingleMatchDetailsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć ten mecz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja jest nieodwracalna. Mecz zostanie trwale usunięty z systemu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processing}>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={processing}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {processing ? "Usuwanie..." : "Usuń"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }
