@@ -80,7 +80,6 @@ export default function SingleMatchDetailsPage() {
     const hasStarted = match.rounds.some(
       (r) =>
         r.player1 &&
-        Object.keys(r.player1).length > 0 &&
         Object.values(r.player1).some((v) => v !== null && v !== 0),
     );
 
@@ -102,7 +101,6 @@ export default function SingleMatchDetailsPage() {
         const matchHasStarted = updatedMatch.rounds.some(
           (r) =>
             r.player1 &&
-            Object.keys(r.player1).length > 0 &&
             Object.values(r.player1).some((v) => v !== null && v !== 0),
         );
         if (matchHasStarted) {
@@ -241,7 +239,11 @@ export default function SingleMatchDetailsPage() {
     !isFinished &&
     !match.ready &&
     !match.opponentReady &&
-    !match.rounds.some((r) => Object.keys(r.player1).length > 0);
+    !match.rounds.some(
+      (r) =>
+        r.player1 &&
+        Object.values(r.player1).some((v) => v !== null && v !== 0),
+    );
 
   // Only creator (player1) can edit/delete
   const canEditOrDelete = isCurrentUserPlayer1 && isScheduledStatus;
@@ -254,10 +256,13 @@ export default function SingleMatchDetailsPage() {
         color: "bg-gray-100 text-gray-700 border-gray-300",
       };
     }
-    if (
-      match.rounds.length > 0 &&
-      match.rounds.some((r) => Object.keys(r.player1).length > 0)
-    ) {
+    // Check if match has actually started (any non-zero scores)
+    const hasActualScores = match.rounds.some(
+      (r) =>
+        r.player1 &&
+        Object.values(r.player1).some((v) => v !== null && v !== 0),
+    );
+    if (hasActualScores) {
       return {
         label: "W trakcie",
         color: "bg-yellow-100 text-yellow-700 border-yellow-300",
@@ -330,7 +335,11 @@ export default function SingleMatchDetailsPage() {
                   {match.ready && match.opponentReady ? (
                     <>
                       {match.rounds.some(
-                        (r) => r.player1 && Object.keys(r.player1).length > 0,
+                        (r) =>
+                          r.player1 &&
+                          Object.values(r.player1).some(
+                            (v) => v !== null && v !== 0,
+                          ),
                       ) ? (
                         <Button
                           onClick={() =>
