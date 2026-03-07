@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createTournament } from "@/lib/api/tournaments";
 import { getGameSystems } from "@/lib/api/systems";
@@ -59,7 +59,7 @@ function toLocalDateInputValue(d: Date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export default function CreateTournamentPage() {
+function CreateTournamentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
@@ -729,5 +729,28 @@ export default function CreateTournamentPage() {
         </CardContent>
       </Card>
     </MainLayout>
+  );
+}
+
+export default function CreateTournamentPage() {
+  return (
+    <Suspense
+      fallback={
+        <MainLayout>
+          <Card className="max-w-3xl">
+            <CardHeader>
+              <CardTitle>Utwórz turniej</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                Ładowanie...
+              </div>
+            </CardContent>
+          </Card>
+        </MainLayout>
+      }
+    >
+      <CreateTournamentForm />
+    </Suspense>
   );
 }
