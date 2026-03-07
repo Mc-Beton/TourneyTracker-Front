@@ -67,6 +67,7 @@ export type MatchSummaryDTO = {
   armyPower: number | null;
   startTime: string;
   endTime: string | null;
+  status: string; // MatchStatus from backend: PENDING, SCHEDULED, IN_PROGRESS, COMPLETED, etc.
   ready: boolean;
   opponentReady: boolean;
   primaryScoreEnabled: boolean;

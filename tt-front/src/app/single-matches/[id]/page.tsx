@@ -77,11 +77,8 @@ export default function SingleMatchDetailsPage() {
 
     // Sprawdź czy mecz jest w fazie oczekiwania (nie zakończony i nie rozpoczęty)
     const isFinished = match.endTime !== null;
-    const hasStarted = match.rounds.some(
-      (r) =>
-        r.player1 &&
-        Object.values(r.player1).some((v) => v !== null && v !== 0),
-    );
+    const hasStarted =
+      match.status === "IN_PROGRESS" || match.status === "COMPLETED";
 
     // Polling tylko gdy mecz nie jest zakończony i nie rozpoczęty (faza gotowości)
     if (isFinished || hasStarted) {
@@ -98,12 +95,7 @@ export default function SingleMatchDetailsPage() {
         setMatch(updatedMatch);
 
         // Jeśli mecz się rozpoczął, przekieruj do scoring
-        const matchHasStarted = updatedMatch.rounds.some(
-          (r) =>
-            r.player1 &&
-            Object.values(r.player1).some((v) => v !== null && v !== 0),
-        );
-        if (matchHasStarted) {
+        if (updatedMatch.status === "IN_PROGRESS") {
           router.push(`/single-matches/${matchId}/scoring`);
         }
       } catch (e) {
@@ -239,30 +231,20 @@ export default function SingleMatchDetailsPage() {
     !isFinished &&
     !match.ready &&
     !match.opponentReady &&
-    !match.rounds.some(
-      (r) =>
-        r.player1 &&
-        Object.values(r.player1).some((v) => v !== null && v !== 0),
-    );
+    match.status === "SCHEDULED";
 
   // Only creator (player1) can edit/delete
   const canEditOrDelete = isCurrentUserPlayer1 && isScheduledStatus;
 
   // Określ status meczu
   const getMatchStatus = () => {
-    if (isFinished) {
+    if (isFinished || match.status === "COMPLETED") {
       return {
         label: "Zakończona",
         color: "bg-gray-100 text-gray-700 border-gray-300",
       };
     }
-    // Check if match has actually started (any non-zero scores)
-    const hasActualScores = match.rounds.some(
-      (r) =>
-        r.player1 &&
-        Object.values(r.player1).some((v) => v !== null && v !== 0),
-    );
-    if (hasActualScores) {
+    if (match.status === "IN_PROGRESS") {
       return {
         label: "W trakcie",
         color: "bg-yellow-100 text-yellow-700 border-yellow-300",
@@ -334,13 +316,7 @@ export default function SingleMatchDetailsPage() {
                   )}
                   {match.ready && match.opponentReady ? (
                     <>
-                      {match.rounds.some(
-                        (r) =>
-                          r.player1 &&
-                          Object.values(r.player1).some(
-                            (v) => v !== null && v !== 0,
-                          ),
-                      ) ? (
+                      {match.status === "IN_PROGRESS" ? (
                         <Button
                           onClick={() =>
                             router.push(`/single-matches/${matchId}/scoring`)
