@@ -1288,20 +1288,23 @@ export default function TournamentDetailsPage() {
                 <CardContent className="flex flex-col gap-2">
                   {isOwner ? (
                     <>
-                      <Button
-                        variant={
-                          data.status === "ACTIVE" ? "outline" : "default"
-                        }
-                        onClick={handleToggleActive}
-                        disabled={toggling}
-                        className="w-full min-h-[44px]"
-                      >
-                        {toggling
-                          ? "..."
-                          : data.status === "ACTIVE"
-                            ? "Dezaktywuj"
-                            : "Aktywuj"}
-                      </Button>
+                      {/* Aktywuj/Dezaktywuj button - only show when not IN_PROGRESS */}
+                      {data.status !== "IN_PROGRESS" && (
+                        <Button
+                          variant={
+                            data.status === "ACTIVE" ? "outline" : "default"
+                          }
+                          onClick={handleToggleActive}
+                          disabled={toggling}
+                          className="w-full min-h-[44px]"
+                        >
+                          {toggling
+                            ? "..."
+                            : data.status === "ACTIVE"
+                              ? "Dezaktywuj"
+                              : "Aktywuj"}
+                        </Button>
+                      )}
                       {data.status === "ACTIVE" && (
                         <Button
                           onClick={handleStart}
