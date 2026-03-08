@@ -58,6 +58,8 @@ export type TournamentListItemDTO = {
 export type TournamentDetailsDTO = TournamentListItemDTO & {
   participantIds: number[];
   roundStartMode?: RoundStartMode;
+  leagueId?: number;
+  leaguePointsAssigned?: boolean;
 };
 
 export type ScoringSystem = "ROUND_BY_ROUND" | "END_OF_MATCH";

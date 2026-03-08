@@ -13,6 +13,7 @@ import {
   getConfirmedParticipants,
   removeParticipant,
   setParticipantConfirmation,
+  confirmTournamentForLeague,
 } from "@/lib/api/tournaments";
 import type {
   TournamentDetailsDTO,
@@ -92,6 +93,7 @@ export default function TournamentDetailsPage() {
   const [challenges, setChallenges] = useState<TournamentChallengeDTO[]>([]);
   const [loadingChallenges, setLoadingChallenges] = useState(false);
   const [challengeActionLoading, setChallengeActionLoading] = useState(false);
+  const [confirmingLeague, setConfirmingLeague] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -308,6 +310,36 @@ export default function TournamentDetailsPage() {
       }
     } finally {
       setStarting(false);
+    }
+  }
+
+  async function handleConfirmForLeague() {
+    if (!data || !auth.token) return;
+
+    if (
+      !confirm(
+        `Czy na pewno chcesz zatwierdzić wyniki tego turnieju dla ligi? Punkty zostaną przypisane uczestnikom.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setConfirmingLeague(true);
+      await confirmTournamentForLeague(data.id, auth.token);
+      // Refresh tournament data to get updated leaguePointsAssigned flag
+      const updated = await getTournamentById(data.id);
+      setData(updated);
+      setError(null);
+    } catch (e) {
+      console.error("Error confirming tournament for league:", e);
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("Nie udało się zatwierdzić wyników dla ligi");
+      }
+    } finally {
+      setConfirmingLeague(false);
     }
   }
 
@@ -1288,23 +1320,38 @@ export default function TournamentDetailsPage() {
                 <CardContent className="flex flex-col gap-2">
                   {isOwner ? (
                     <>
-                      {/* Aktywuj/Dezaktywuj button - only show when not IN_PROGRESS */}
-                      {data.status !== "IN_PROGRESS" && (
-                        <Button
-                          variant={
-                            data.status === "ACTIVE" ? "outline" : "default"
-                          }
-                          onClick={handleToggleActive}
-                          disabled={toggling}
-                          className="w-full min-h-[44px]"
-                        >
-                          {toggling
-                            ? "..."
-                            : data.status === "ACTIVE"
-                              ? "Dezaktywuj"
-                              : "Aktywuj"}
-                        </Button>
-                      )}
+                      {/* Aktywuj/Dezaktywuj button - only show when not IN_PROGRESS or COMPLETED */}
+                      {data.status !== "IN_PROGRESS" &&
+                        data.status !== "COMPLETED" && (
+                          <Button
+                            variant={
+                              data.status === "ACTIVE" ? "outline" : "default"
+                            }
+                            onClick={handleToggleActive}
+                            disabled={toggling}
+                            className="w-full min-h-[44px]"
+                          >
+                            {toggling
+                              ? "..."
+                              : data.status === "ACTIVE"
+                                ? "Dezaktywuj"
+                                : "Aktywuj"}
+                          </Button>
+                        )}
+                      {/* Zatwierdź wynik button - only for COMPLETED tournaments with a league */}
+                      {data.status === "COMPLETED" &&
+                        data.leagueId &&
+                        !data.leaguePointsAssigned && (
+                          <Button
+                            onClick={handleConfirmForLeague}
+                            disabled={confirmingLeague}
+                            className="w-full min-h-[44px] bg-purple-600 hover:bg-purple-700"
+                          >
+                            {confirmingLeague
+                              ? "Zatwierdzanie..."
+                              : "Zatwierdź wynik"}
+                          </Button>
+                        )}
                       {data.status === "ACTIVE" && (
                         <Button
                           onClick={handleStart}

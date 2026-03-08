@@ -97,6 +97,18 @@ export function startTournament(
   });
 }
 
+export function confirmTournamentForLeague(
+  id: number,
+  token: string,
+): Promise<TournamentDetails> {
+  return http<TournamentDetails>(`/api/tournaments/${id}/confirm-for-league`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
 export function addParticipant(
   tournamentId: number,
   userId: number,
