@@ -65,6 +65,9 @@ export interface LeagueDTO {
   pointsLoss: number;
   pointsParticipation: number;
   pointsPerParticipant: number;
+  pointsFirstPlace: number;
+  pointsSecondPlace: number;
+  pointsThirdPlace: number;
 
   memberCount?: number;
 }
@@ -102,6 +105,9 @@ export interface CreateLeagueDTO {
   pointsLoss: number;
   pointsParticipation: number;
   pointsPerParticipant: number;
+  pointsFirstPlace: number;
+  pointsSecondPlace: number;
+  pointsThirdPlace: number;
 }
 
 export interface LeagueMemberDTO {

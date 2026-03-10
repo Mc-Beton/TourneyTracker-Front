@@ -311,28 +311,48 @@ export function RoundDefinitionEditor({
                   <div className="flex items-center gap-2">
                     <input
                       type="radio"
-                      id="algorithmCustom"
+                      id="algorithmBacktracking"
                       name="pairingAlgorithm"
-                      value="CUSTOM"
-                      checked={form.pairingAlgorithm === "CUSTOM"}
+                      value="BACKTRACKING"
+                      checked={form.pairingAlgorithm === "BACKTRACKING"}
                       onChange={(e) =>
                         update("pairingAlgorithm", e.target.value)
                       }
                       className="h-4 w-4"
                     />
                     <Label
-                      htmlFor="algorithmCustom"
+                      htmlFor="algorithmBacktracking"
                       className="cursor-pointer font-normal"
                     >
-                      Custom (dostosowany algorytm)
+                      Backtracking (systematyczne przeszukiwanie z
+                      ograniczeniami)
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="algorithmCPSAT"
+                      name="pairingAlgorithm"
+                      value="CP_SAT"
+                      checked={form.pairingAlgorithm === "CP_SAT"}
+                      onChange={(e) =>
+                        update("pairingAlgorithm", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="algorithmCPSAT"
+                      className="cursor-pointer font-normal"
+                    >
+                      CP-SAT (solver optymalizacyjny)
                     </Label>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Player Level Pairing Strategy - tylko dla rundy 1 i CUSTOM */}
-            {roundNumber === 1 && form.pairingAlgorithm === "CUSTOM" && (
+            {/* Player Level Pairing Strategy - tylko dla rundy 1 i BACKTRACKING */}
+            {roundNumber === 1 && form.pairingAlgorithm === "BACKTRACKING" && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">
                   Strategia parowania według poziomu gracza
@@ -435,28 +455,49 @@ export function RoundDefinitionEditor({
                   <div className="flex items-center gap-2">
                     <input
                       type="radio"
-                      id="algorithmCustomNext"
+                      id="algorithmBacktrackingNext"
                       name="pairingAlgorithmNext"
-                      value="CUSTOM"
-                      checked={form.pairingAlgorithm === "CUSTOM"}
+                      value="BACKTRACKING"
+                      checked={form.pairingAlgorithm === "BACKTRACKING"}
                       onChange={(e) =>
                         update("pairingAlgorithm", e.target.value)
                       }
                       className="h-4 w-4"
                     />
                     <Label
-                      htmlFor="algorithmCustomNext"
+                      htmlFor="algorithmBacktrackingNext"
                       className="cursor-pointer font-normal"
                     >
-                      Dynamiczny (dostosowany)
+                      Backtracking (systematyczne przeszukiwanie z
+                      ograniczeniami)
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="algorithmCPSATNext"
+                      name="pairingAlgorithmNext"
+                      value="CP_SAT"
+                      checked={form.pairingAlgorithm === "CP_SAT"}
+                      onChange={(e) =>
+                        update("pairingAlgorithm", e.target.value)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="algorithmCPSATNext"
+                      className="cursor-pointer font-normal"
+                    >
+                      CP-SAT (solver optymalizacyjny)
                     </Label>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Avoid Same Team/City - Dostępne w CUSTOM (dla wszystkich rund) */}
-            {form.pairingAlgorithm === "CUSTOM" && (
+            {/* Avoid Same Team/City - Dostępne w BACKTRACKING, CP_SAT (dla wszystkich rund) */}
+            {(form.pairingAlgorithm === "BACKTRACKING" ||
+              form.pairingAlgorithm === "CP_SAT") && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">
                   Ograniczenia parowania (opcjonalne)
@@ -500,55 +541,57 @@ export function RoundDefinitionEditor({
               </div>
             )}
 
-            {/* Table Assignment Strategy - dla rund kolejnych i CUSTOM */}
-            {roundNumber > 1 && form.pairingAlgorithm === "CUSTOM" && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold">
-                  Strategia przypisywania stołów
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      id="tableBestFirst"
-                      name="tableAssignmentStrategy"
-                      value="BEST_FIRST"
-                      checked={form.tableAssignmentStrategy === "BEST_FIRST"}
-                      onChange={(e) =>
-                        update("tableAssignmentStrategy", e.target.value)
-                      }
-                      className="h-4 w-4"
-                    />
-                    <Label
-                      htmlFor="tableBestFirst"
-                      className="cursor-pointer font-normal"
-                    >
-                      Najlepsi do pierwszych stołów - stoły sekwencyjnie wg
-                      rankingu
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      id="tableRandom"
-                      name="tableAssignmentStrategy"
-                      value="RANDOM"
-                      checked={form.tableAssignmentStrategy === "RANDOM"}
-                      onChange={(e) =>
-                        update("tableAssignmentStrategy", e.target.value)
-                      }
-                      className="h-4 w-4"
-                    />
-                    <Label
-                      htmlFor="tableRandom"
-                      className="cursor-pointer font-normal"
-                    >
-                      Losowe - każda para dostaje losowy numer stołu
-                    </Label>
+            {/* Table Assignment Strategy - dla rund kolejnych i BACKTRACKING/CP_SAT */}
+            {roundNumber > 1 &&
+              (form.pairingAlgorithm === "BACKTRACKING" ||
+                form.pairingAlgorithm === "CP_SAT") && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold">
+                    Strategia przypisywania stołów
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="tableBestFirst"
+                        name="tableAssignmentStrategy"
+                        value="BEST_FIRST"
+                        checked={form.tableAssignmentStrategy === "BEST_FIRST"}
+                        onChange={(e) =>
+                          update("tableAssignmentStrategy", e.target.value)
+                        }
+                        className="h-4 w-4"
+                      />
+                      <Label
+                        htmlFor="tableBestFirst"
+                        className="cursor-pointer font-normal"
+                      >
+                        Najlepsi do pierwszych stołów - stoły sekwencyjnie wg
+                        rankingu
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="tableRandom"
+                        name="tableAssignmentStrategy"
+                        value="RANDOM"
+                        checked={form.tableAssignmentStrategy === "RANDOM"}
+                        onChange={(e) =>
+                          update("tableAssignmentStrategy", e.target.value)
+                        }
+                        className="h-4 w-4"
+                      />
+                      <Label
+                        htmlFor="tableRandom"
+                        className="cursor-pointer font-normal"
+                      >
+                        Losowe - każda para dostaje losowy numer stołu
+                      </Label>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         )}
 

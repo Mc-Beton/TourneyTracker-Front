@@ -44,8 +44,11 @@ export default function CreateLeaguePage() {
     pointsWin: 3,
     pointsDraw: 1,
     pointsLoss: 0,
-    pointsParticipation: 1,
+    pointsParticipation: 2,
     pointsPerParticipant: 0,
+    pointsFirstPlace: 5,
+    pointsSecondPlace: 3,
+    pointsThirdPlace: 1,
   });
 
   // Redirect logic for auth could be handled by a layout or here
@@ -217,8 +220,11 @@ export default function CreateLeaguePage() {
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="font-medium">Konfiguracja Punktacji</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <h3 className="font-medium">Punkty w Pojedynczych Meczach</h3>
+              <p className="text-sm text-gray-500">
+                Punkty przyznawane graczom za wyniki pojedynczych meczów
+              </p>
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="pointsWin">Punkty za Wygraną</Label>
                   <Input
@@ -249,6 +255,19 @@ export default function CreateLeaguePage() {
                     onChange={handleChange}
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-medium">Punkty za Turnieje</h3>
+              <p className="text-sm text-gray-500">
+                Punkty przyznawane uczestnikom po zakończeniu turnieju
+              </p>
+              <div className="p-3 bg-blue-50 rounded-md text-sm text-blue-800 mb-4">
+                <strong>Formuła:</strong> Punkty = (Uczestnictwo) + (Na
+                Uczestnika × Liczba Uczestników) + Bonus za Podium
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="pointsParticipation">
                     Punkty za Uczestnictwo
@@ -260,6 +279,59 @@ export default function CreateLeaguePage() {
                     value={formData.pointsParticipation}
                     onChange={handleChange}
                   />
+                  <p className="text-xs text-gray-500">
+                    Bazowe punkty za udział w turnieju
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pointsPerParticipant">
+                    Punkty na Uczestnika (turnieje)
+                  </Label>
+                  <Input
+                    type="number"
+                    id="pointsPerParticipant"
+                    name="pointsPerParticipant"
+                    value={formData.pointsPerParticipant}
+                    onChange={handleChange}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Mnożone przez liczbę uczestników
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2 pt-2">
+                <Label className="text-base">Bonusy za Podium</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pointsFirstPlace">1. Miejsce</Label>
+                    <Input
+                      type="number"
+                      id="pointsFirstPlace"
+                      name="pointsFirstPlace"
+                      value={formData.pointsFirstPlace}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pointsSecondPlace">2. Miejsce</Label>
+                    <Input
+                      type="number"
+                      id="pointsSecondPlace"
+                      name="pointsSecondPlace"
+                      value={formData.pointsSecondPlace}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pointsThirdPlace">3. Miejsce</Label>
+                    <Input
+                      type="number"
+                      id="pointsThirdPlace"
+                      name="pointsThirdPlace"
+                      value={formData.pointsThirdPlace}
+                      onChange={handleChange}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
