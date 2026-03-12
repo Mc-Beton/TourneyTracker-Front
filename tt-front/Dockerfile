@@ -13,15 +13,19 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
-# Build time environment variable - MUST be before COPY
+# Build time environment variables - MUST be before COPY
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_USER_SERVICE_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_USER_SERVICE_URL=$NEXT_PUBLIC_USER_SERVICE_URL
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build the application
-RUN echo "Building with NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" && npm run build
+RUN echo "Building with NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" && \
+    echo "Building with NEXT_PUBLIC_USER_SERVICE_URL=$NEXT_PUBLIC_USER_SERVICE_URL" && \
+    npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
