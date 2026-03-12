@@ -39,7 +39,22 @@ Utwórz plik `.env.local` w głównym katalogu projektu:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080
+
+# Google reCAPTCHA v2 (required for user registration)
+# Get your keys from: https://www.google.com/recaptcha/admin
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key_here
 ```
+
+### Konfiguracja Google reCAPTCHA
+
+1. Zarejestruj swoją stronę na [Google reCAPTCHA Admin](https://www.google.com/recaptcha/admin)
+2. Wybierz reCAPTCHA v2 ("I'm not a robot" checkbox)
+3. Dodaj swoją domenę (dla developmentu: `localhost`)
+4. Skopiuj Site Key i dodaj do `.env.local`
+
+Dla testów możesz użyć kluczy testowych Google:
+
+- Site key: `6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI` (zawsze przechodzi walidację)
 
 ## Struktura projektu
 
@@ -74,6 +89,9 @@ src/
 ### Autentykacja
 
 - ✅ Rejestracja użytkownika
+  - ✅ Walidacja pól (nazwa, email, hasło min. 6 znaków)
+  - ✅ Potwierdzenie hasła (double password check)
+  - ✅ Google reCAPTCHA v2 (weryfikacja człowiek)
 - ✅ Logowanie z JWT
 - ✅ Persistencja sesji (localStorage)
 - ✅ Automatyczne przekierowania

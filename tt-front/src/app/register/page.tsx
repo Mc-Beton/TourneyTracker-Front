@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ReCAPTCHA from "react-google-recaptcha";
 import { register } from "@/lib/api/auth";
 import type { RegisterDTO } from "@/lib/types/auth";
 import MainLayout from "@/components/MainLayout";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [form, setForm] = useState<RegisterDTO>({
     name: "",
@@ -19,19 +21,26 @@ export default function RegisterPage() {
     password: "",
   });
 
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [success, setSuccess] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(3);
 
+  const captchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+
   const canSubmit = useMemo(() => {
     if (!form.name.trim()) return false;
     if (!form.email.trim()) return false;
     if (!form.password) return false;
     if (form.password.length < 6) return false;
+    if (form.password !== confirmPassword) return false;
+    if (!captchaToken) return false;
     return true;
-  }, [form]);
+  }, [form, confirmPassword, captchaToken]);
 
   function update<K extends keyof RegisterDTO>(key: K, value: RegisterDTO[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -75,9 +84,16 @@ export default function RegisterPage() {
     } catch (e: unknown) {
       setSuccess(false);
       setError(e instanceof Error ? e.message : "Nieznany błąd");
+      // Reset CAPTCHA on error
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function onCaptchaChange(token: string | null) {
+    setCaptchaToken(token);
   }
 
   return (
@@ -129,6 +145,41 @@ export default function RegisterPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Potwierdź hasło*
+                </label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  disabled={submitting || success}
+                />
+                {confirmPassword && form.password !== confirmPassword && (
+                  <p className="text-sm text-destructive mt-1">
+                    Hasła nie są identyczne
+                  </p>
+                )}
+              </div>
+
+              {captchaSiteKey && (
+                <div className="flex justify-center">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={captchaSiteKey}
+                    onChange={onCaptchaChange}
+                  />
+                </div>
+              )}
+
+              {!captchaSiteKey && (
+                <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded">
+                  ⚠️ CAPTCHA nie jest skonfigurowana. Dodaj
+                  NEXT_PUBLIC_RECAPTCHA_SITE_KEY do .env.local
+                </div>
+              )}
+
               <Button
                 type="submit"
                 disabled={!canSubmit || submitting || success}
@@ -139,7 +190,8 @@ export default function RegisterPage() {
 
               {!canSubmit && !success && (
                 <p className="text-sm text-muted-foreground">
-                  Uzupełnij: nazwa, email, hasło (min 6 znaków).
+                  Uzupełnij wszystkie pola. Hasła muszą się zgadzać i mieć min.
+                  6 znaków. Potwierdź, że nie jesteś robotem.
                 </p>
               )}
 
