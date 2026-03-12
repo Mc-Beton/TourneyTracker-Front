@@ -617,7 +617,12 @@ export default function LeagueDetailsPage() {
                             {index + 1}
                           </div>
                           <div className="col-span-4 font-medium flex items-center gap-2 truncate">
-                            {member.user.name}
+                            <Link
+                              href={`/users/${member.user.id}`}
+                              className="hover:text-primary hover:underline"
+                            >
+                              {member.user.name}
+                            </Link>
                             {member.user.id === userId && (
                               <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">
                                 Ty

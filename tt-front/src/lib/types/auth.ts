@@ -2,6 +2,7 @@ export type RegisterDTO = {
   name: string;
   email: string;
   password: string;
+  captchaToken: string;
 };
 
 export type LoginDTO = {
@@ -24,6 +25,22 @@ export type UserProfile = {
   team?: string;
   city?: string;
   discordNick?: string;
+};
+
+export type UserProfileDTO = {
+  id: number;
+  name: string;
+  realName?: string;
+  surname?: string;
+  email: string;
+  team?: string;
+  city?: string;
+  discordNick?: string;
+  totalMatches: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  winRatio: number;
 };
 
 export type UpdateProfileDTO = {

@@ -2,7 +2,11 @@
 
 import { http } from "./http";
 import type { UserLookupDTO } from "../types/systems";
-import type { UserProfile, UpdateProfileDTO } from "../types/auth";
+import type {
+  UserProfile,
+  UpdateProfileDTO,
+  UserProfileDTO,
+} from "../types/auth";
 
 export function searchUsers(query: string, token: string, limit: number = 10) {
   return http<UserLookupDTO[]>(
@@ -43,4 +47,8 @@ export async function updateProfile(data: UpdateProfileDTO, token: string) {
     },
     body: JSON.stringify(data),
   });
+}
+
+export async function getUserPublicProfile(userId: number) {
+  return http<UserProfileDTO>(`/api/users/${userId}/profile`);
 }

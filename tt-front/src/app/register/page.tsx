@@ -75,6 +75,7 @@ export default function RegisterPage() {
       name: form.name.trim(),
       email: form.email.trim(),
       password: form.password,
+      captchaToken: captchaToken || "",
     };
 
     setSubmitting(true);

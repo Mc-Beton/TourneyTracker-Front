@@ -994,9 +994,12 @@ export default function TournamentDetailsPage() {
                           <TableCell>
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium">
+                                <Link
+                                  href={`/users/${participant.userId}`}
+                                  className="font-medium hover:text-primary hover:underline"
+                                >
                                   {participant.name}
-                                </div>
+                                </Link>
                                 {participant.armyFactionName &&
                                   participant.armyName && (
                                     <div className="text-sm text-muted-foreground truncate">
@@ -1157,9 +1160,12 @@ export default function TournamentDetailsPage() {
                           <TableCell>
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium">
+                                <Link
+                                  href={`/users/${participant.userId}`}
+                                  className="font-medium hover:text-primary hover:underline"
+                                >
                                   {participant.name}
-                                </div>
+                                </Link>
                                 {participant.armyFactionName &&
                                   participant.armyName && (
                                     <div className="text-sm text-muted-foreground truncate">
