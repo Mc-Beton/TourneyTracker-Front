@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import ReCAPTCHA from "react-google-recaptcha";
+// import ReCAPTCHA from "react-google-recaptcha";
 import { register } from "@/lib/api/auth";
 import type { RegisterDTO } from "@/lib/types/auth";
 import MainLayout from "@/components/MainLayout";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  // const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [form, setForm] = useState<RegisterDTO>({
     name: "",
@@ -22,7 +22,7 @@ export default function RegisterPage() {
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(3);
 
-  const captchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+  // const captchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
   const canSubmit = useMemo(() => {
     if (!form.name.trim()) return false;
@@ -38,10 +38,10 @@ export default function RegisterPage() {
     if (!form.password) return false;
     if (form.password.length < 6) return false;
     if (form.password !== confirmPassword) return false;
-    // reCAPTCHA is optional - only required if configured
-    if (captchaSiteKey && !captchaToken) return false;
+    // reCAPTCHA disabled
+    // if (captchaSiteKey && !captchaToken) return false;
     return true;
-  }, [form, confirmPassword, captchaToken, captchaSiteKey]);
+  }, [form, confirmPassword]);
 
   function update<K extends keyof RegisterDTO>(key: K, value: RegisterDTO[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -76,7 +76,7 @@ export default function RegisterPage() {
       name: form.name.trim(),
       email: form.email.trim(),
       password: form.password,
-      captchaToken: captchaToken || "",
+      // captchaToken: captchaToken || "",
     };
 
     setSubmitting(true);
@@ -87,16 +87,16 @@ export default function RegisterPage() {
       setSuccess(false);
       setError(e instanceof Error ? e.message : "Nieznany błąd");
       // Reset CAPTCHA on error
-      setCaptchaToken(null);
-      recaptchaRef.current?.reset();
+      // setCaptchaToken(null);
+      // recaptchaRef.current?.reset();
     } finally {
       setSubmitting(false);
     }
   }
 
-  function onCaptchaChange(token: string | null) {
-    setCaptchaToken(token);
-  }
+  // function onCaptchaChange(token: string | null) {
+  //   setCaptchaToken(token);
+  // }
 
   return (
     <MainLayout>
@@ -165,7 +165,8 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {captchaSiteKey && (
+              {/* reCAPTCHA disabled */}
+              {/* {captchaSiteKey && (
                 <div className="flex justify-center">
                   <ReCAPTCHA
                     ref={recaptchaRef}
@@ -173,14 +174,14 @@ export default function RegisterPage() {
                     onChange={onCaptchaChange}
                   />
                 </div>
-              )}
+              )} */}
 
-              {!captchaSiteKey && (
+              {/* {!captchaSiteKey && (
                 <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded">
                   ⚠️ CAPTCHA nie jest skonfigurowana. Dodaj
                   NEXT_PUBLIC_RECAPTCHA_SITE_KEY do .env.local
                 </div>
-              )}
+              )} */}
 
               <Button
                 type="submit"
@@ -194,7 +195,6 @@ export default function RegisterPage() {
                 <p className="text-sm text-muted-foreground">
                   Uzupełnij wszystkie pola. Hasła muszą się zgadzać i mieć min.
                   6 znaków.
-                  {captchaSiteKey && " Potwierdź, że nie jesteś robotem."}
                 </p>
               )}
 
