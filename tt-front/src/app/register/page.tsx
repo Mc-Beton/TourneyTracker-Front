@@ -38,9 +38,10 @@ export default function RegisterPage() {
     if (!form.password) return false;
     if (form.password.length < 6) return false;
     if (form.password !== confirmPassword) return false;
-    if (!captchaToken) return false;
+    // reCAPTCHA is optional - only required if configured
+    if (captchaSiteKey && !captchaToken) return false;
     return true;
-  }, [form, confirmPassword, captchaToken]);
+  }, [form, confirmPassword, captchaToken, captchaSiteKey]);
 
   function update<K extends keyof RegisterDTO>(key: K, value: RegisterDTO[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -192,7 +193,8 @@ export default function RegisterPage() {
               {!canSubmit && !success && (
                 <p className="text-sm text-muted-foreground">
                   Uzupełnij wszystkie pola. Hasła muszą się zgadzać i mieć min.
-                  6 znaków. Potwierdź, że nie jesteś robotem.
+                  6 znaków.
+                  {captchaSiteKey && " Potwierdź, że nie jesteś robotem."}
                 </p>
               )}
 

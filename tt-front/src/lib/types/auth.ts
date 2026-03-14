@@ -2,7 +2,7 @@ export type RegisterDTO = {
   name: string;
   email: string;
   password: string;
-  captchaToken: string;
+  captchaToken?: string;
 };
 
 export type LoginDTO = {
