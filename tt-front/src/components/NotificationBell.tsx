@@ -91,9 +91,22 @@ export function NotificationBell() {
       }
     }
 
-    // Navigate to tournament
+    // Navigate based on notification type
     setIsOpen(false);
-    router.push(`/tournaments/${notification.tournamentId}`);
+
+    if (notification.type === "LEAGUE_CHALLENGE_RECEIVED") {
+      // League challenge received - go to challenges tab
+      router.push(`/leagues/${notification.tournamentId}?tab=challenges`);
+    } else if (
+      notification.type === "LEAGUE_CHALLENGE_ACCEPTED" ||
+      notification.type === "LEAGUE_CHALLENGE_REJECTED"
+    ) {
+      // League challenge accepted/rejected - go to matches tab
+      router.push(`/leagues/${notification.tournamentId}?tab=matches`);
+    } else {
+      // Tournament notifications
+      router.push(`/tournaments/${notification.tournamentId}`);
+    }
   };
 
   const handleMarkAllRead = async () => {
@@ -121,6 +134,15 @@ export function NotificationBell() {
       case "ARMY_LIST_APPROVED":
         return "✅";
       case "ARMY_LIST_REJECTED":
+        return "❌";
+      case "CHALLENGE_RECEIVED":
+      case "LEAGUE_CHALLENGE_RECEIVED":
+        return "⚔️";
+      case "CHALLENGE_ACCEPTED":
+      case "LEAGUE_CHALLENGE_ACCEPTED":
+        return "✅";
+      case "CHALLENGE_REJECTED":
+      case "LEAGUE_CHALLENGE_REJECTED":
         return "❌";
       default:
         return "🔔";
@@ -162,7 +184,9 @@ export function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-xl border-2 border-gray-300 z-50">
           <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-            <h3 className="font-semibold text-lg text-gray-900">Powiadomienia</h3>
+            <h3 className="font-semibold text-lg text-gray-900">
+              Powiadomienia
+            </h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}

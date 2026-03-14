@@ -8,7 +8,13 @@ export interface Notification {
     | "PARTICIPATION_CONFIRMED"
     | "PAYMENT_CONFIRMED"
     | "ARMY_LIST_APPROVED"
-    | "ARMY_LIST_REJECTED";
+    | "ARMY_LIST_REJECTED"
+    | "CHALLENGE_RECEIVED"
+    | "CHALLENGE_ACCEPTED"
+    | "CHALLENGE_REJECTED"
+    | "LEAGUE_CHALLENGE_RECEIVED"
+    | "LEAGUE_CHALLENGE_ACCEPTED"
+    | "LEAGUE_CHALLENGE_REJECTED";
   tournamentId: number;
   tournamentName: string;
   message: string;

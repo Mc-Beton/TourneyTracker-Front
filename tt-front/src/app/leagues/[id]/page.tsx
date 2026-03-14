@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/useAuth";
 import {
@@ -144,6 +144,7 @@ function TournamentStatusBadge({ status }: { status: TournamentStatus }) {
 export default function LeagueDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = parseInt(
     Array.isArray(params.id) ? params.id[0] : params.id || "0",
   );
@@ -163,11 +164,23 @@ export default function LeagueDetailsPage() {
   const [joining, setJoining] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Active tab state - default to 'members' or from URL param
+  const defaultTab = searchParams?.get("tab") || "members";
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
+
   // New State for Challenge Dialog
   const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<number | null>(null);
   const [challengeDate, setChallengeDate] = useState("");
   const [challengeMessage, setChallengeMessage] = useState("");
+
+  // Update active tab when URL params change
+  useEffect(() => {
+    const tab = searchParams?.get("tab");
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const fetchData = async () => {
     try {
@@ -505,7 +518,7 @@ export default function LeagueDetailsPage() {
         </div>
       )}
 
-      <Tabs defaultValue="members" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4 lg:w-[550px]">
           <TabsTrigger value="members">Tabela</TabsTrigger>
           <TabsTrigger value="matches">Mecze</TabsTrigger>
