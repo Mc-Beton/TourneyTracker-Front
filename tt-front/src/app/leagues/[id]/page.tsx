@@ -232,6 +232,7 @@ export default function LeagueDetailsPage() {
   useEffect(() => {
     if (!id) return;
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isAuthenticated, userId]);
 
   const isMember = members.some((m) => m.user.id === userId);
@@ -287,11 +288,16 @@ export default function LeagueDetailsPage() {
       setActionLoading(true);
       await deleteLeague(id);
       router.push("/leagues");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to delete league", err);
+      const isApiError = (
+        e: unknown,
+      ): e is { response?: { data?: { message?: string } } } => {
+        return typeof e === "object" && e !== null && "response" in e;
+      };
       const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
+        (isApiError(err) && err.response?.data?.message) ||
+        (err instanceof Error ? err.message : null) ||
         "Nie udało się usunąć ligi";
       alert(`Błąd: ${errorMessage}`);
     } finally {
@@ -936,7 +942,9 @@ export default function LeagueDetailsPage() {
                           ).toLocaleString()}
                         </p>
                         {challenge.message && (
-                          <p className="italic mt-1">"{challenge.message}"</p>
+                          <p className="italic mt-1">
+                            &quot;{challenge.message}&quot;
+                          </p>
                         )}
                       </div>
                       <div className="flex gap-2">
