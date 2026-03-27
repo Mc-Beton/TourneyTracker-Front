@@ -41,6 +41,7 @@ export default function CreateLeaguePage() {
       .split("T")[0], // Default +1 month
     autoAcceptGames: true,
     autoAcceptTournaments: true,
+    paymentRequired: false,
     pointsWin: 3,
     pointsDraw: 1,
     pointsLoss: 0,
@@ -367,6 +368,20 @@ export default function CreateLeaguePage() {
                 />
                 <Label htmlFor="autoAcceptTournaments">
                   Automatycznie zatwierdzaj wyniki turniejów
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="paymentRequired"
+                  checked={formData.paymentRequired}
+                  onChange={(e) =>
+                    handleCheckboxChange("paymentRequired", e.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="paymentRequired">
+                  Wymagana płatność za uczestnictwo
                 </Label>
               </div>
             </div>

@@ -252,3 +252,19 @@ export async function getLeagueMatches(
     },
   );
 }
+
+/**
+ * Toggle payment status for a league member.
+ */
+export async function toggleMemberPaymentStatus(
+  leagueId: number,
+  userId: number,
+  hasPaid: boolean,
+): Promise<LeagueMemberDTO> {
+  return http<LeagueMemberDTO>(
+    `/api/leagues/${leagueId}/members/${userId}/payment?hasPaid=${hasPaid}`,
+    {
+      method: "PATCH",
+    },
+  );
+}

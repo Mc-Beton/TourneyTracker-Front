@@ -45,6 +45,7 @@ export default function EditLeaguePage() {
     endDate: "",
     autoAcceptGames: true,
     autoAcceptTournaments: true,
+    paymentRequired: false,
     pointsWin: 3,
     pointsDraw: 1,
     pointsLoss: 0,
@@ -79,6 +80,7 @@ export default function EditLeaguePage() {
           endDate: leagueData.endDate,
           autoAcceptGames: leagueData.autoAcceptGames,
           autoAcceptTournaments: leagueData.autoAcceptTournaments,
+          paymentRequired: leagueData.paymentRequired,
           pointsWin: leagueData.pointsWin,
           pointsDraw: leagueData.pointsDraw,
           pointsLoss: leagueData.pointsLoss,
@@ -418,6 +420,20 @@ export default function EditLeaguePage() {
                 />
                 <Label htmlFor="autoAcceptTournaments">
                   Automatycznie zatwierdzaj wyniki turniejów
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="paymentRequired"
+                  checked={formData.paymentRequired}
+                  onChange={(e) =>
+                    handleCheckboxChange("paymentRequired", e.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="paymentRequired">
+                  Wymagana płatność za uczestnictwo
                 </Label>
               </div>
             </div>

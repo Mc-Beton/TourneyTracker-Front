@@ -19,6 +19,7 @@ import {
   getMyOutgoingChallenges,
   getLeagueMatches,
   getLeagueTournaments,
+  toggleMemberPaymentStatus,
 } from "@/lib/api/leagues";
 import {
   LeagueDTO,
@@ -30,6 +31,7 @@ import {
   MatchStatus,
   TournamentStatus,
 } from "@/lib/types/league";
+import { MatchMode } from "@/lib/types/singleMatch";
 import {
   Card,
   CardContent,
@@ -51,6 +53,8 @@ import {
   Sword,
   ShieldAlert,
   Edit,
+  DollarSign,
+  Monitor,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -62,6 +66,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { PaymentStatusBadge } from "@/components/ui/status-badges";
 
 function LeagueStatusBadge({ status }: { status: LeagueStatus }) {
   const styles: Record<string, string> = {
@@ -173,6 +178,9 @@ export default function LeagueDetailsPage() {
   const [selectedOpponent, setSelectedOpponent] = useState<number | null>(null);
   const [challengeDate, setChallengeDate] = useState("");
   const [challengeMessage, setChallengeMessage] = useState("");
+  const [challengeMatchMode, setChallengeMatchMode] = useState<MatchMode>(
+    MatchMode.LIVE,
+  );
 
   // Update active tab when URL params change
   useEffect(() => {
@@ -327,6 +335,7 @@ export default function LeagueDetailsPage() {
       setActionLoading(true);
       await createChallenge({
         leagueId: id,
+        matchMode: challengeMatchMode,
         opponentId: selectedOpponent,
         scheduledTime: new Date(challengeDate).toISOString(),
         message: challengeMessage,
@@ -354,6 +363,21 @@ export default function LeagueDetailsPage() {
       console.error("Failed to respond to challenge", err);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleTogglePayment = async (
+    userId: number,
+    currentHasPaid: boolean,
+  ) => {
+    if (!league) return;
+    try {
+      await toggleMemberPaymentStatus(id, userId, !currentHasPaid);
+      // Refresh members list
+      fetchData();
+    } catch (err) {
+      console.error("Failed to toggle payment status", err);
+      alert("Nie udało się zmienić statusu płatności");
     }
   };
 
@@ -388,7 +412,9 @@ export default function LeagueDetailsPage() {
             <h1 className="text-3xl font-bold tracking-tight">{league.name}</h1>
             <LeagueStatusBadge status={league.status} />
           </div>
-          <p className="text-muted-foreground text-lg">{league.description}</p>
+          <p className="text-muted-foreground text-lg whitespace-pre-line">
+            {league.description}
+          </p>
           <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded">
               <Trophy className="w-4 h-4" />
@@ -577,6 +603,19 @@ export default function LeagueDetailsPage() {
                         </select>
                       </div>
                       <div className="space-y-2">
+                        <Label>Tryb gry</Label>
+                        <select
+                          className="w-full p-2 border rounded-md"
+                          value={challengeMatchMode}
+                          onChange={(e) =>
+                            setChallengeMatchMode(e.target.value as MatchMode)
+                          }
+                        >
+                          <option value={MatchMode.LIVE}>Live</option>
+                          <option value={MatchMode.ONLINE}>TTS</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
                         <Label>Planowana data</Label>
                         <Input
                           type="datetime-local"
@@ -618,11 +657,22 @@ export default function LeagueDetailsPage() {
                 <div className="rounded-md border">
                   <div className="grid grid-cols-12 text-sm font-medium text-muted-foreground bg-muted/50 py-3 px-4 border-b">
                     <div className="col-span-1">#</div>
-                    <div className="col-span-4">Gracz</div>
+                    <div className="col-span-3">Gracz</div>
                     <div className="col-span-2 text-center">Pkt</div>
-                    <div className="col-span-2 text-center">W</div>
+                    <div className="col-span-1 text-center">W</div>
                     <div className="col-span-1 text-center">M</div>
-                    <div className="col-span-2 text-right">Akcje</div>
+                    {league.paymentRequired && (
+                      <div className="col-span-1 text-center">Płatność</div>
+                    )}
+                    <div
+                      className={
+                        league.paymentRequired
+                          ? "col-span-3 text-right"
+                          : "col-span-4 text-right"
+                      }
+                    >
+                      Akcje
+                    </div>
                   </div>
                   <div className="divide-y">
                     {members
@@ -635,7 +685,7 @@ export default function LeagueDetailsPage() {
                           <div className="col-span-1 font-medium">
                             {index + 1}
                           </div>
-                          <div className="col-span-4 font-medium flex items-center gap-2 truncate">
+                          <div className="col-span-3 font-medium flex items-center gap-2 truncate">
                             <Link
                               href={`/users/${member.user.id}`}
                               className="hover:text-primary hover:underline"
@@ -656,13 +706,40 @@ export default function LeagueDetailsPage() {
                           <div className="col-span-2 text-center font-bold">
                             {member.points}
                           </div>
-                          <div className="col-span-2 text-center">
+                          <div className="col-span-1 text-center">
                             {member.wins}
                           </div>
                           <div className="col-span-1 text-center">
                             {member.matchesPlayed}
                           </div>
-                          <div className="col-span-2 text-right">
+                          {league.paymentRequired && (
+                            <div className="col-span-1 text-center">
+                              <button
+                                onClick={() => {
+                                  if (isOwner || member.user.id === userId) {
+                                    handleTogglePayment(
+                                      member.user.id,
+                                      member.hasPaid,
+                                    );
+                                  }
+                                }}
+                                disabled={!isOwner && member.user.id !== userId}
+                                className={`${isOwner || member.user.id === userId ? "hover:opacity-70 cursor-pointer" : "cursor-default"} transition-all p-2 rounded min-w-[44px] min-h-[44px] flex items-center justify-center inline-flex`}
+                                title={
+                                  isOwner
+                                    ? "Przełącz status płatności"
+                                    : member.user.id === userId
+                                      ? "Twój status płatności"
+                                      : ""
+                                }
+                              >
+                                <PaymentStatusBadge isPaid={member.hasPaid} />
+                              </button>
+                            </div>
+                          )}
+                          <div
+                            className={`${league.paymentRequired ? "col-span-3" : "col-span-4"} text-right`}
+                          >
                             {isAuthenticated &&
                               isMember &&
                               member.user.id !== userId &&
@@ -771,8 +848,29 @@ export default function LeagueDetailsPage() {
                         href={`/single-matches/${match.matchId}`}
                         className="block"
                       >
-                        <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-md transition-shadow cursor-pointer">
-                          <div className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-md transition-shadow cursor-pointer relative">
+                          {/* Match Mode Indicator */}
+                          <div className="absolute top-2 left-2">
+                            {match.mode === MatchMode.ONLINE ? (
+                              <div
+                                className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                                title="TTS (Online)"
+                              >
+                                <Monitor className="w-3 h-3" />
+                                <span>TTS</span>
+                              </div>
+                            ) : (
+                              <div
+                                className="flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
+                                title="Live"
+                              >
+                                <Users className="w-3 h-3" />
+                                <span>Live</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1 ml-16">
+                            {/* Added margin to avoid overlap with mode badge */}
                             <div className="font-semibold text-lg">
                               <span
                                 className={

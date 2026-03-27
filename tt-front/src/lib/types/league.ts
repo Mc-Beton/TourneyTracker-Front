@@ -1,3 +1,5 @@
+import { MatchMode } from "./singleMatch";
+
 export type MatchStatus =
   | "PENDING"
   | "SCHEDULED"
@@ -38,6 +40,7 @@ export interface SingleMatchResponseDTO {
   winnerId?: number;
   player1Score?: number;
   player2Score?: number;
+  mode: MatchMode;
 }
 
 export interface TournamentResponseDTO {
@@ -56,6 +59,7 @@ export interface LeagueDTO {
   endDate: string;
   autoAcceptGames: boolean;
   autoAcceptTournaments: boolean;
+  paymentRequired: boolean;
 
   status: LeagueStatus;
 
@@ -83,6 +87,7 @@ export interface LeagueChallengeDTO {
   scheduledTime: string; // ISO DateTime
   message?: string;
   createdAt: string;
+  matchMode: MatchMode;
 }
 
 export interface CreateChallengeDTO {
@@ -90,6 +95,7 @@ export interface CreateChallengeDTO {
   opponentId: number;
   scheduledTime: string;
   message?: string;
+  matchMode?: MatchMode;
 }
 
 export interface CreateLeagueDTO {
@@ -100,6 +106,7 @@ export interface CreateLeagueDTO {
   endDate: string;
   autoAcceptGames: boolean;
   autoAcceptTournaments: boolean;
+  paymentRequired: boolean;
   pointsWin: number;
   pointsDraw: number;
   pointsLoss: number;
@@ -120,6 +127,7 @@ export interface LeagueMemberDTO {
   wins: number;
   draws: number;
   losses?: number;
+  hasPaid: boolean;
 }
 
 export interface LeagueMatchDTO {
