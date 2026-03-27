@@ -848,12 +848,13 @@ export default function LeagueDetailsPage() {
                         href={`/single-matches/${match.matchId}`}
                         className="block"
                       >
-                        <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-md transition-shadow cursor-pointer relative">
-                          {/* Match Mode Indicator */}
-                          <div className="absolute top-2 left-2">
+                        <div className="border rounded-lg bg-card hover:shadow-md transition-shadow cursor-pointer p-3 space-y-2">
+                          {/* Top row: Mode badge + Status badge */}
+                          <div className="flex items-center justify-between gap-2">
+                            {/* Match Mode Indicator */}
                             {match.mode === MatchMode.ONLINE ? (
                               <div
-                                className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                                className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded"
                                 title="TTS (Online)"
                               >
                                 <Monitor className="w-3 h-3" />
@@ -861,66 +862,74 @@ export default function LeagueDetailsPage() {
                               </div>
                             ) : (
                               <div
-                                className="flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
+                                className="flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded"
                                 title="Live"
                               >
                                 <Users className="w-3 h-3" />
                                 <span>Live</span>
                               </div>
                             )}
+                            <MatchStatusBadge status={m.status} />
                           </div>
-                          <div className="flex flex-col gap-1 ml-16">
-                            {/* Added margin to avoid overlap with mode badge */}
-                            <div className="font-semibold text-lg">
-                              <span
-                                className={
-                                  match.winnerId === match.player1Id
-                                    ? "text-green-600 font-bold"
-                                    : ""
-                                }
-                              >
-                                {p1}
-                              </span>
-                              <span className="mx-2 text-muted-foreground">
-                                vs
-                              </span>
-                              <span
-                                className={
-                                  match.winnerId === match.player2Id
-                                    ? "text-green-600 font-bold"
-                                    : ""
-                                }
-                              >
-                                {p2}
-                              </span>
-                            </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2">
-                              <Calendar className="w-3 h-3" />
-                              {date}
-                              {m.submittedBy && (
-                                <span className="text-xs ml-2">
-                                  (Zgłosił: {m.submittedBy.name})
+
+                          {/* Players row */}
+                          <div className="flex items-baseline justify-between gap-2">
+                            <div className="font-semibold text-sm sm:text-base flex-1 min-w-0">
+                              <div className="flex flex-wrap items-baseline gap-1">
+                                <span
+                                  className={`break-words ${
+                                    match.winnerId === match.player1Id
+                                      ? "text-green-600 font-bold"
+                                      : ""
+                                  }`}
+                                >
+                                  {p1}
                                 </span>
-                              )}
+                                <span className="text-muted-foreground text-xs sm:text-sm">
+                                  vs
+                                </span>
+                                <span
+                                  className={`break-words ${
+                                    match.winnerId === match.player2Id
+                                      ? "text-green-600 font-bold"
+                                      : ""
+                                  }`}
+                                >
+                                  {p2}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
+
+                            {/* Score */}
                             <div
-                              className={`text-2xl font-bold px-3 py-1 rounded ${
+                              className={`text-lg sm:text-2xl font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded whitespace-nowrap ${
                                 isCompletedWithoutScores
                                   ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
                                   : "bg-muted"
                               }`}
                             >
-                              {p1Score} : {p2Score}
+                              {p1Score}:{p2Score}
                             </div>
-                            {isCompletedWithoutScores && (
-                              <span className="text-xs text-yellow-600">
-                                Brak wyników
+                          </div>
+
+                          {/* Bottom row: Date + Submitter */}
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{date}</span>
+                            </div>
+                            {m.submittedBy && (
+                              <span className="hidden sm:inline">
+                                • Zgłosił: {m.submittedBy.name}
                               </span>
                             )}
-                            <MatchStatusBadge status={m.status} />
                           </div>
+
+                          {isCompletedWithoutScores && (
+                            <div className="text-xs text-yellow-600 text-center">
+                              Brak wyników
+                            </div>
+                          )}
                         </div>
                       </Link>
                     );
