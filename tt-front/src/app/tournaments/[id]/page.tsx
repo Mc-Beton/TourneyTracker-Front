@@ -803,9 +803,17 @@ export default function TournamentDetailsPage() {
                 )}
               </p>
               {data.description && (
-                <p>
-                  <strong>Opis:</strong> {data.description}
-                </p>
+                <div className="mt-2">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Opis
+                  </p>
+                  <div
+                    className="bg-gray-50 p-3 rounded-md border border-gray-200 text-sm overflow-auto break-words"
+                    style={{ whiteSpace: "break-spaces" }}
+                  >
+                    {data.description}
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>

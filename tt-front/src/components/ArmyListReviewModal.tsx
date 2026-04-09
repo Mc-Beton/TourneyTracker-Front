@@ -72,19 +72,19 @@ export function ArmyListReviewModal({
   };
 
   const handleReject = async () => {
-    if (!rejectionReason.trim()) {
-      setError("Podaj powód odrzucenia");
-      return;
-    }
+    // Powód odrzucenia jest opcjonalny
+    const reason = rejectionReason.trim();
 
     setSubmitting(true);
     setError(null);
 
     try {
-      await participantApi.reviewArmyList(tournamentId, userId, {
-        approved: false,
-        rejectionReason: rejectionReason.trim(),
-      });
+      const payload: { approved: boolean; rejectionReason?: string } = { approved: false };
+      if (reason) {
+        payload.rejectionReason = reason;
+      }
+
+      await participantApi.reviewArmyList(tournamentId, userId, payload);
 
       if (onReviewSubmitted) {
         onReviewSubmitted();
@@ -170,7 +170,10 @@ export function ArmyListReviewModal({
                 <p className="text-sm font-medium text-muted-foreground mb-2">
                   Treść rozpiski
                 </p>
-                <div className="bg-gray-50 p-4 rounded-md border border-gray-200 whitespace-pre-wrap font-mono text-sm">
+                <div
+                  className="bg-gray-50 p-4 rounded-md border border-gray-200 whitespace-pre-wrap font-mono text-sm overflow-auto break-words"
+                  style={{ whiteSpace: "break-spaces" }}
+                >
                   {armyList.armyListContent}
                 </div>
               </div>
