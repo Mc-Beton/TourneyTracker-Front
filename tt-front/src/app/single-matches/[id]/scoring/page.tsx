@@ -58,22 +58,29 @@ export default function MatchScoringPage() {
 
   // Timer dla rundy turniejowej
   useEffect(() => {
-    if (!matchData?.startTime) return;
+    if (!matchData) return;
+    const startStr = matchData.rounds?.find(r => r.roundNumber === matchData.currentRound)?.startTime || null;
+    if (!startStr) {
+      setElapsedTime(0);
+      return;
+    }
 
     const interval = setInterval(() => {
-      const start = new Date(matchData.startTime!).getTime();
+      const start = new Date(startStr).getTime();
       const now = Date.now();
       setElapsedTime(Math.floor((now - start) / 1000));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [matchData]);
+  }, [matchData?.currentRound, matchData?.rounds]);
 
   // Funkcja obliczająca pozostały czas rundy turniejowej
   const getRemainingTime = () => {
-    if (!matchData?.gameDurationMinutes || !matchData?.startTime) return null;
+    if (!matchData?.gameDurationMinutes || !matchData?.rounds) return null;
+    const current = matchData.rounds.find(r => r.roundNumber === matchData.currentRound);
+    if (!current?.startTime) return null;
 
-    const start = new Date(matchData.startTime).getTime();
+    const start = new Date(current.startTime).getTime();
     const now = Date.now();
     const gameEnd = start + matchData.gameDurationMinutes * 60 * 1000;
     const remaining = Math.max(0, gameEnd - now);
@@ -549,7 +556,7 @@ export default function MatchScoringPage() {
               <CardTitle className="text-lg">
                 🎯 Runda {matchData.currentRound} / {matchData.totalRounds}
               </CardTitle>
-              {matchData.startTime && matchData.status !== "FINISHED" && (
+              {(remainingTime !== null || elapsedTime > 0) && matchData.status !== "FINISHED" && (
                 <div className="text-right">
                   {remainingTime !== null && remainingTime > 0 ? (
                     <div>
