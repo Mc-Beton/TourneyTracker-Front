@@ -56,35 +56,35 @@ export default function MatchScoringPage() {
     loadMatchData();
   }, [auth.token, matchId]);
 
-  // Timer dla rundy turniejowej
+  // Timer meczu — bazuje na starcie całej rozgrywki (matchData.startTime)
   useEffect(() => {
-    if (!matchData) return;
-    const startStr = matchData.rounds?.find(r => r.roundNumber === matchData.currentRound)?.startTime || null;
-    if (!startStr) {
+    if (!matchData?.startTime) {
+      setElapsedTime(0);
+      return;
+    }
+    const startMs = new Date(matchData.startTime).getTime();
+
+    // Nie uruchamiaj licznika przed faktycznym startem meczu
+    if (Date.now() < startMs) {
       setElapsedTime(0);
       return;
     }
 
     const interval = setInterval(() => {
-      const start = new Date(startStr).getTime();
-      const now = Date.now();
-      setElapsedTime(Math.floor((now - start) / 1000));
+      setElapsedTime(Math.floor((Date.now() - startMs) / 1000));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [matchData?.currentRound, matchData?.rounds]);
+  }, [matchData?.startTime]);
 
-  // Funkcja obliczająca pozostały czas rundy turniejowej
+  // Funkcja obliczająca pozostały czas rundy turniejowej względem startu MECZU
   const getRemainingTime = () => {
-    if (!matchData?.gameDurationMinutes || !matchData?.rounds) return null;
-    const current = matchData.rounds.find(r => r.roundNumber === matchData.currentRound);
-    if (!current?.startTime) return null;
-
-    const start = new Date(current.startTime).getTime();
+    if (!matchData?.gameDurationMinutes || !matchData?.startTime) return null;
+    const startMs = new Date(matchData.startTime).getTime();
     const now = Date.now();
-    const gameEnd = start + matchData.gameDurationMinutes * 60 * 1000;
+    if (now < startMs) return null; // nie pokazuj nic przed startem meczu
+    const gameEnd = startMs + matchData.gameDurationMinutes * 60 * 1000;
     const remaining = Math.max(0, gameEnd - now);
-
     return Math.floor(remaining / 1000); // w sekundach
   };
 
