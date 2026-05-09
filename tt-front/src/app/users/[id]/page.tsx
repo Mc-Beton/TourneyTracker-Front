@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getUserPublicProfile } from "@/lib/api/users";
 import { UserProfileDTO } from "@/lib/types/auth";
+import MainLayout from "@/components/MainLayout";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,11 +21,13 @@ import {
   Trophy,
   Target,
   TrendingUp,
+  ArrowLeft,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 export default function UserProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const userId = params?.id ? Number(params.id) : null;
 
   const [profile, setProfile] = useState<UserProfileDTO | null>(null);
@@ -54,40 +58,57 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <MainLayout>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
     );
   }
 
   if (error || !profile) {
     return (
-      <div className="container mx-auto py-8">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Błąd</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{error || "Nie znaleziono użytkownika"}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="container mx-auto py-8">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Błąd</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{error || "Nie znaleziono użytkownika"}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 
   const winPercentage = profile.winRatio * 100;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{profile.name}</h1>
-        {(profile.realName || profile.surname) && (
-          <p className="text-lg text-muted-foreground">
-            {[profile.realName, profile.surname].filter(Boolean).join(" ")}
-          </p>
-        )}
-      </div>
+    <MainLayout>
+      <div className="container mx-auto py-6 space-y-6">
+        {/* Back */}
+        <div>
+          <Button
+            variant="ghost"
+            className="px-2"
+            onClick={() => router.back()}
+            aria-label="Wróć"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" /> Wróć
+          </Button>
+        </div>
+
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">{profile.name}</h1>
+          {(profile.realName || profile.surname) && (
+            <p className="text-lg text-muted-foreground">
+              {[profile.realName, profile.surname].filter(Boolean).join(" ")}
+            </p>
+          )}
+        </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* User Information */}
@@ -228,5 +249,6 @@ export default function UserProfilePage() {
         </Card>
       </div>
     </div>
+    </MainLayout>
   );
 }

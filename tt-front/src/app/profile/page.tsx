@@ -222,8 +222,15 @@ export default function ProfilePage() {
                   <Button onClick={() => setIsEditing(true)}>
                     Edytuj profil
                   </Button>
-                  <Button onClick={() => router.push("/tournaments/my")}>
-                    Moje Turnieje
+                  <Button
+                    onClick={() =>
+                      auth.userId
+                        ? router.push(`/users/${auth.userId}`)
+                        : router.push(`/users`)
+                    }
+                    aria-label="Moje statystyki"
+                  >
+                    Moje statystyki
                   </Button>
                   <Button onClick={() => auth.logout()} variant="destructive">
                     Wyloguj się

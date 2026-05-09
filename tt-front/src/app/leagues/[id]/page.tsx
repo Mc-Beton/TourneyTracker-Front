@@ -160,6 +160,11 @@ export default function LeagueDetailsPage() {
   const [pendingMembers, setPendingMembers] = useState<LeagueMemberDTO[]>([]);
   const [myChallenges, setMyChallenges] = useState<LeagueChallengeDTO[]>([]);
   const [leagueMatches, setLeagueMatches] = useState<LeagueMatchDTO[]>([]);
+  // Pagination state for matches
+  const [matchesPage, setMatchesPage] = useState(0);
+  const [matchesSize] = useState(20);
+  const [matchesTotal, setMatchesTotal] = useState(0);
+  const [matchesLoadingMore, setMatchesLoadingMore] = useState(false);
   const [leagueTournaments, setLeagueTournaments] = useState<
     LeagueTournamentDTO[]
   >([]);
@@ -190,19 +195,34 @@ export default function LeagueDetailsPage() {
     }
   }, [searchParams]);
 
+  // Load one page of matches, append or replace
+  const loadMatchesPage = async (p: number, replace: boolean = false) => {
+    try {
+      setMatchesLoadingMore(true);
+      const resp = await getLeagueMatches(id, p, matchesSize);
+      setMatchesTotal(resp?.totalElements || 0);
+      setLeagueMatches((prev) => (replace ? resp.content || [] : [...prev, ...(resp.content || [])]));
+      setMatchesPage(p);
+    } catch (e) {
+      console.error("Failed to load league matches page", e);
+    } finally {
+      setMatchesLoadingMore(false);
+    }
+  };
+
   const fetchData = async () => {
     try {
       // Don't set loading true here to avoid flickering on re-fetch
       const leagueData = await getLeague(id);
       setLeague(leagueData);
 
-      const [membersData, matchesData, tournamentsData] = await Promise.all([
+      const [membersData, tournamentsData] = await Promise.all([
         getLeagueMembers(id),
-        getLeagueMatches(id),
         getLeagueTournaments(id),
       ]);
       setMembers(membersData);
-      setLeagueMatches(matchesData?.content || []);
+      // initial matches page load (sorted by id desc on backend)
+      await loadMatchesPage(0, true);
       setLeagueTournaments(tournamentsData?.content || []);
 
       if (isAuthenticated && userId) {
