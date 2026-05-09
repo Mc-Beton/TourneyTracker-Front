@@ -88,17 +88,6 @@ export default function UserProfilePage() {
   return (
     <MainLayout>
       <div className="container mx-auto py-6 space-y-6">
-        {/* Back */}
-        <div>
-          <Button
-            variant="ghost"
-            className="px-2"
-            onClick={() => router.back()}
-            aria-label="Wróć"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Wróć
-          </Button>
-        </div>
 
         {/* Header */}
         <div className="space-y-2">

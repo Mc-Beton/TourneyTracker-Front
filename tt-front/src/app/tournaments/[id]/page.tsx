@@ -143,7 +143,6 @@ export default function TournamentDetailsPage() {
       !id ||
       !data ||
       !isParticipant ||
-      data.status !== "IN_PROGRESS" ||
       !auth.token
     )
       return;
@@ -682,7 +681,7 @@ export default function TournamentDetailsPage() {
   return (
     <MainLayout>
       {/* Panel "Twój mecz" dla uczestników - na górze */}
-      {isParticipant && data.status === "IN_PROGRESS" && (
+      {isParticipant && (data.status === "ACTIVE" || data.status === "IN_PROGRESS") && (
         <Card className="mb-4">
           <CardHeader>
             <CardTitle className="text-lg">Twój mecz</CardTitle>
