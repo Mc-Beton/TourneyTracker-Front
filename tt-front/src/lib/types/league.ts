@@ -73,6 +73,9 @@ export interface LeagueDTO {
   pointsSecondPlace: number;
   pointsThirdPlace: number;
 
+  // New: add TP from tournament to league points on confirmation
+  includeTpFromTournament: boolean;
+
   memberCount?: number;
 }
 
@@ -115,6 +118,8 @@ export interface CreateLeagueDTO {
   pointsFirstPlace: number;
   pointsSecondPlace: number;
   pointsThirdPlace: number;
+  // New: add TP from tournament to league points on confirmation
+  includeTpFromTournament: boolean;
 }
 
 export interface LeagueMemberDTO {

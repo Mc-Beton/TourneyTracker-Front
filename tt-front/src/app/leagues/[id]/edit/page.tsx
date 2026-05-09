@@ -54,6 +54,7 @@ export default function EditLeaguePage() {
     pointsFirstPlace: 5,
     pointsSecondPlace: 3,
     pointsThirdPlace: 1,
+    includeTpFromTournament: false,
   });
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export default function EditLeaguePage() {
           pointsFirstPlace: leagueData.pointsFirstPlace,
           pointsSecondPlace: leagueData.pointsSecondPlace,
           pointsThirdPlace: leagueData.pointsThirdPlace,
+          includeTpFromTournament: !!leagueData.includeTpFromTournament,
         });
         setLoading(false);
       } catch (err) {
@@ -385,6 +387,29 @@ export default function EditLeaguePage() {
                       onChange={handleChange}
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Opcja: dodawanie TP z turnieju do punktów ligi */}
+              <div className="flex items-start space-x-3 pt-2">
+                <input
+                  type="checkbox"
+                  id="includeTpFromTournament"
+                  checked={!!formData.includeTpFromTournament}
+                  onChange={(e) =>
+                    handleCheckboxChange("includeTpFromTournament", e.target.checked)
+                  }
+                  className="mt-1 h-4 w-4 rounded border-gray-300"
+                />
+                <div>
+                  <Label htmlFor="includeTpFromTournament" className="cursor-pointer">
+                    Punkty uzyskane z turnieju
+                  </Label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Jeśli zaznaczone, podczas zatwierdzania wyników turnieju do punktów ligi
+                    zostaną dodane także punkty TP zdobyte przez gracza w tym turnieju (oprócz
+                    punktów za uczestnictwo, liczby uczestników i bonusów za podium).
+                  </p>
                 </div>
               </div>
             </div>
