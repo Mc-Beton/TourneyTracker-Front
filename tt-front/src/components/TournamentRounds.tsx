@@ -24,6 +24,7 @@ import {
 import { getRoundDefinitions } from "@/lib/api/roundDefinitions";
 import { RoundInfoCard } from "./RoundInfoCard";
 import { MatchDetailsModal } from "./MatchDetailsModal";
+import { OrganizerScoresModal } from "./OrganizerScoresModal";
 import { useAuth } from "@/lib/auth/useAuth";
 import {
   Table,
@@ -33,6 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pencil } from "lucide-react";
 
 interface TournamentRoundsProps {
   tournamentId: number;
@@ -64,6 +66,8 @@ export function TournamentRounds({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
+  const [organizerEditMatchId, setOrganizerEditMatchId] = useState<number | null>(null);
+  const [organizerModalOpen, setOrganizerModalOpen] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
@@ -680,6 +684,21 @@ export function TournamentRounds({
                               ✓ Wynik wpisany
                             </span>
                           )}
+                          {/* Organizer edit button (pencil) */}
+                          {isOrganizer && (match.status === "COMPLETED" || match.status === "FINISHED" || match.gameEndTime != null) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Edytuj wyniki"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOrganizerEditMatchId(match.matchId);
+                                setOrganizerModalOpen(true);
+                              }}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
 
@@ -821,6 +840,20 @@ export function TournamentRounds({
         matchId={selectedMatchId}
         isOpen={!!selectedMatchId}
         onClose={() => setSelectedMatchId(null)}
+      />
+
+      <OrganizerScoresModal
+        matchId={organizerEditMatchId}
+        open={organizerModalOpen}
+        onClose={() => {
+          setOrganizerModalOpen(false);
+          setOrganizerEditMatchId(null);
+        }}
+        onSaved={() => {
+          // Refresh rounds and stats after saving edits
+          loadRoundsData();
+          loadStatsData();
+        }}
       />
     </div>
   );
